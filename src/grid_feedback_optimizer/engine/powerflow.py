@@ -100,10 +100,10 @@ class PowerFlowSolver:
 
         return output_data
     
-    def run(self, gen_update: np.ndarray = None, load_update: np.ndarray = None):
+    def run(self, gen_update: np.ndarray = None):
         """
         Re-run power flow in optimization iterations.
-        The size of the arrays should match the total numbers of gens and loads.
+        The size of the arrays should match the total numbers of gens.
         """
         update_data_no_id = {}
         if gen_update is not None:
@@ -112,12 +112,6 @@ class PowerFlowSolver:
             update_sym_gen_no_id["q_specified"] = gen_update[:, 1]
             update_data_no_id[ComponentType.sym_gen] = update_sym_gen_no_id
 
-        if load_update is not None:
-            update_sym_load_no_id = initialize_array(DatasetType.update, ComponentType.sym_load, self.n_load)
-            update_sym_load_no_id["p_specified"] = load_update[:, 0]
-            update_sym_load_no_id["q_specified"] = load_update[:, 1]
-            update_data_no_id[ComponentType.sym_load] = update_sym_load_no_id
-
         # rerun
         self.model.update(update_data = update_data_no_id)
         output_data = self.model.calculate_power_flow(
@@ -125,3 +119,7 @@ class PowerFlowSolver:
         )
 
         return output_data
+    
+    def obtain_sensitivity(self):
+
+        pass
