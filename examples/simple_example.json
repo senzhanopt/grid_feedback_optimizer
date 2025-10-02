@@ -30,6 +30,7 @@
   "sources": [
     {
       "index": 0,
+      "bus": 0,
       "u_ref_pu": 1.0
     }
   ],

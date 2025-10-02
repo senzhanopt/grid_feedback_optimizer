@@ -24,6 +24,7 @@ class Line(BaseModel):
 
 class Source(BaseModel):
     index: int
+    bus: int
     u_ref_pu: float
 
 
