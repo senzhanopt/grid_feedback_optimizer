@@ -97,8 +97,7 @@ class PowerFlowSolver:
         self.n_gen = n_gen
         self.n_load = n_load
         self.model = model
-
-        return output_data
+        self.base_output_data = output_data
     
     def run(self, gen_update: np.ndarray = None):
         """
@@ -120,6 +119,12 @@ class PowerFlowSolver:
 
         return output_data
     
-    def obtain_sensitivity(self):
-
-        pass
+    def obtain_sensitivity(self, delta_p = 1.0, delta_q = 1.0):
+        """
+        Compute sensitivities of voltages and line currents to small perturbations
+        in generator and load power setpoints around the default operating point.
+        """
+        
+        # base operating data
+        u_pu_base = self.base_output_data[ComponentType.node]["u_pu"]
+        print(u_pu_base)

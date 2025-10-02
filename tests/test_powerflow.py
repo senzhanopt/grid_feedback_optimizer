@@ -10,7 +10,6 @@ def test_powerflow_from_example():
 
     # Load the network
     network = load_network(EXAMPLE_JSON)
-
     power_flow_solver = PowerFlowSolver(network)
-
     power_flow_solver.run(gen_update =np.array([50000.0, 0.0]).reshape(1,2))
+    power_flow_solver.obtain_sensitivity()
