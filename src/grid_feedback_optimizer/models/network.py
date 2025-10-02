@@ -33,15 +33,14 @@ class RenewGen(BaseModel):
     bus: int
     p_max: float
     s_inv: float
+    p_min: Optional[float] = 0.0
+    q_norm: Optional[float] = 0.0
     p_norm: Optional[float] = None
-    q_norm: Optional[float] = None
 
     @model_validator(mode="after")
     def set_defaults(self):
         if self.p_norm is None:
             self.p_norm = self.p_max
-        if self.q_norm is None:
-            self.q_norm = 0.0
         return self
 
 
