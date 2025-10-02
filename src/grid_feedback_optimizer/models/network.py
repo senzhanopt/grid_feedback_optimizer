@@ -24,7 +24,6 @@ class Line(BaseModel):
 
 class Source(BaseModel):
     index: int
-    u_rated: float
     u_ref_pu: float
 
 

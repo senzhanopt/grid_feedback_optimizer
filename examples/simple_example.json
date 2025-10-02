@@ -30,7 +30,6 @@
   "sources": [
     {
       "index": 0,
-      "u_rated": 230.0,
       "u_ref_pu": 1.0
     }
   ],
