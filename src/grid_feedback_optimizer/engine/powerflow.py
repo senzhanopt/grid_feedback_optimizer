@@ -73,7 +73,7 @@ class PowerFlowSolver:
         sym_gen["node"] = [gen.bus for gen in network.renew_gens]
         sym_gen["status"] = [1] * n_gen
         sym_gen["type"] = [LoadGenType.const_power] * n_gen
-        sym_gen["p_specified"] = [gen.p_norm for gen in network.renew_gens]
+        sym_gen["p_specified"] = [gen.p_max for gen in network.renew_gens]
         sym_gen["q_specified"] = [gen.q_norm for gen in network.renew_gens]
         id_count += n_gen
 
@@ -94,10 +94,14 @@ class PowerFlowSolver:
             symmetric=True, error_tolerance=1e-8, max_iterations=20, calculation_method=CalculationMethod.newton_raphson
         )
 
+        self.n_bus = n_bus
+        self.n_line = n_line
         self.n_gen = n_gen
         self.n_load = n_load
         self.model = model
         self.base_output_data = output_data
+        self.base_p_gen = sym_gen["p_specified"]
+        self.base_q_gen = sym_gen["q_specified"]
     
     def run(self, gen_update: np.ndarray = None):
         """
@@ -118,13 +122,82 @@ class PowerFlowSolver:
         )
 
         return output_data
-    
-    def obtain_sensitivity(self, delta_p = 1.0, delta_q = 1.0):
+
+    def obtain_sensitivity(self, delta_p=1.0, delta_q=1.0):
         """
-        Compute sensitivities of voltages and line currents to small perturbations
-        in generator and load power setpoints around the default operating point.
+        Compute sensitivities of bus voltages and line power flows to small perturbations
+        in generator power injections (p and q) around the default operating point.
+
+        Parameters
+        ----------
+        delta_p : float
+            Active power perturbation (W).
+        delta_q : float
+            Reactive power perturbation (VAr).
+
+        Returns
+        -------
+        sensitivities : dict
+            {
+            "du_dp": array (n_bus, n_gen),
+            "du_dq": array (n_bus, n_gen),
+            "dP_line_dp": array (n_line, n_gen),
+            "dQ_line_dp": array (n_line, n_gen),
+            "dP_line_dq": array (n_line, n_gen),
+            "dQ_line_dq": array (n_line, n_gen)
+            }
         """
-        
-        # base operating data
-        u_pu_base = self.base_output_data[ComponentType.node]["u_pu"]
-        print(u_pu_base)
+        # Base operating point
+        u_pu_base = np.array(self.base_output_data[ComponentType.node]["u_pu"])
+        P_base = np.array(self.base_output_data[ComponentType.line]["p_from"])
+        Q_base = np.array(self.base_output_data[ComponentType.line]["q_from"])
+        gen_base = np.column_stack((self.base_p_gen, self.base_q_gen))
+
+        # Allocate arrays
+        du_dp = np.zeros((self.n_bus, self.n_gen))
+        du_dq = np.zeros((self.n_bus, self.n_gen))
+        dP_line_dp = np.zeros((self.n_line, self.n_gen))
+        dQ_line_dp = np.zeros((self.n_line, self.n_gen))
+        dP_line_dq = np.zeros((self.n_line, self.n_gen))
+        dQ_line_dq = np.zeros((self.n_line, self.n_gen))
+
+        # Loop over generators
+        for g in range(self.n_gen):
+            # perturb p
+            gen_base[g, 0] += delta_p
+            output_p = self.run(gen_update=gen_base)
+            u_pu_p = np.array(output_p[ComponentType.node]["u_pu"])
+            P_line_p = np.array(output_p[ComponentType.line]["p_from"])
+            Q_line_p = np.array(output_p[ComponentType.line]["q_from"])
+
+            du_dp[:, g] = (u_pu_p - u_pu_base) / delta_p
+            dP_line_dp[:, g] = (P_line_p - P_base) / delta_p
+            dQ_line_dp[:, g] = (Q_line_p - Q_base) / delta_p
+            
+            # recover to the base power
+            gen_base[g, 0] -= delta_p
+
+            # perturb q
+            gen_base[g, 1] += delta_q
+            output_q = self.run(gen_update=gen_base)
+            u_pu_q = np.array(output_q[ComponentType.node]["u_pu"])
+            P_line_q = np.array(output_q[ComponentType.line]["p_from"])
+            Q_line_q = np.array(output_q[ComponentType.line]["q_from"])
+
+            du_dq[:, g] = (u_pu_q - u_pu_base) / delta_q
+            dP_line_dq[:, g] = (P_line_q - P_base) / delta_q
+            dQ_line_dq[:, g] = (Q_line_q - Q_base) / delta_q
+            
+            # recover to the base power
+            gen_base[g, 1] -= delta_q
+
+        sensitivities = {
+            "du_dp": du_dp,
+            "du_dq": du_dq,
+            "dP_line_dp": dP_line_dp,
+            "dQ_line_dp": dQ_line_dp,
+            "dP_line_dq": dP_line_dq,
+            "dQ_line_dq": dQ_line_dq
+        }
+
+        return sensitivities

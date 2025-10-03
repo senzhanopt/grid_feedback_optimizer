@@ -7,4 +7,4 @@ json_file = Path(__file__).parent.parent / "examples" / "simple_example.json"
 # Load network
 network = load_network(json_file)
 
-print(network.buses)
+print(network.renew_gens[0].p_max)

@@ -21,5 +21,4 @@ def test_load_network_from_example():
 
     # Check generator defaults
     gen = network.renew_gens[0]
-    assert gen.p_norm == gen.p_max or gen.p_norm is not None
     assert gen.q_norm == 0.0 or gen.q_norm is not None

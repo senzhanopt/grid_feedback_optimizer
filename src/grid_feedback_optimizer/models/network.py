@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 # -------- Core Models -------- #
 # unit in W, V, A
@@ -35,13 +35,6 @@ class RenewGen(BaseModel):
     s_inv: float
     p_min: Optional[float] = 0.0
     q_norm: Optional[float] = 0.0
-    p_norm: Optional[float] = None
-
-    @model_validator(mode="after")
-    def set_defaults(self):
-        if self.p_norm is None:
-            self.p_norm = self.p_max
-        return self
 
 
 class Load(BaseModel):
