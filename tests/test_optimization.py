@@ -16,7 +16,6 @@ def test_optimization_from_example():
     optimizer = GradientProjectionOptimizer(network, sensitivities)
 
     param_dict = {
-        "alpha": 0.1,
         "u_pu_meas": np.array([1.0,1.08]),
         "P_line_meas": np.array([-30000.0]),
         "Q_line_meas": np.array([30000.0]),

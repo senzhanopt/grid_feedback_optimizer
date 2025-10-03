@@ -12,10 +12,10 @@ class GradientProjectionOptimizer:
         """
         Initialize optimizer and build cached problem.
         """
-        self.prob = self._build_problem(network, sensitivities, alpha)
+        self.prob = self.build_problem(network, sensitivities, alpha)
 
 
-    def _build_problem(self, network, sensitivities, alpha, c_q = 0.1):
+    def build_problem(self, network, sensitivities, alpha, c_q = 0.1):
         """
         Build CVXPY problem with Parameters and Variables.
         Only called once. Returns dictionary with problem and variables/parameters.
@@ -98,14 +98,13 @@ class GradientProjectionOptimizer:
 
         try:
             self.prob.solve()
-            print(self.prob.solver_stats.solver_name)
         except:
             print(self.prob.status)
             # If solver fails, return last known feasible values
             print("Solver failed, returning previous generator setpoints.")
-            return param_dict["p_gen_last"], param_dict["q_gen_last"]
+            return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
         else:
             if  self.prob.status == "optimal":
-                return self.p_gen.value, self.q_gen.value
+                return np.column_stack((self.p_gen.value, self.q_gen.value))
             else:            
-                return param_dict["p_gen_last"], param_dict["q_gen_last"]      
+                return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
