@@ -10,5 +10,7 @@ def test_solve_from_example():
 
     # Load the network
     network = load_network(EXAMPLE_JSON)
-    solve(network)
-
+    output_data = solve(network)
+    
+if __name__ == "__main__":
+    test_solve_from_example()
