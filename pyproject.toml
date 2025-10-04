@@ -63,7 +63,6 @@ dependencies = [
   "pytest==8.4.2",
   "python-dateutil==2.9.0.post0",
   "pytz==2025.2",
-  "pywin32==311",
   "pyzmq==27.1.0",
   "scipy==1.16.2",
   "scs==3.2.8",
