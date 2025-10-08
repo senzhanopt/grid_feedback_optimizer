@@ -46,6 +46,32 @@ class PowerFlowSolver:
         line["i_n"] = [line.i_n for line in network.lines]
         id_count += n_line
 
+        # transformer
+        n_transformer = len(network.transformers)
+        transformer = initialize_array(DatasetType.input, ComponentType.transformer, n_transformer)
+        transformer["id"] = np.arange(id_count, id_count + n_transformer)
+        transformer["from_node"] = [transformer.from_bus for transformer in network.transformers]
+        transformer["to_node"] = [transformer.to_bus for transformer in network.transformers]
+        transformer["from_status"] = [1] * n_transformer
+        transformer["to_status"] = [1] * n_transformer
+        transformer["u1"] = [transformer.u1 for transformer in network.transformers]
+        transformer["u2"] = [transformer.u2 for transformer in network.transformers]
+        transformer["sn"] = [transformer.sn for transformer in network.transformers]
+        transformer["uk"] = [transformer.uk for transformer in network.transformers]
+        transformer["pk"] = [transformer.pk for transformer in network.transformers]
+        transformer["i0"] = [transformer.i0 for transformer in network.transformers]
+        transformer["p0"] = [transformer.p0 for transformer in network.transformers]
+        transformer["winding_from"] = [transformer.winding_from for transformer in network.transformers]
+        transformer["winding_to"] = [transformer.winding_to for transformer in network.transformers]
+        transformer["clock"] = [transformer.clock for transformer in network.transformers]
+        transformer["tap_side"] = [transformer.tap_side for transformer in network.transformers]
+        transformer["tap_pos"] = [transformer.tap_pos for transformer in network.transformers]
+        transformer["tap_min"] = [transformer.tap_min for transformer in network.transformers]
+        transformer["tap_max"] = [transformer.tap_max for transformer in network.transformers]
+        transformer["tap_size"] = [transformer.tap_size for transformer in network.transformers]
+        id_count += n_transformer
+
+
         # source
         n_source = len(network.sources)
         source = initialize_array(DatasetType.input, ComponentType.source, n_source)
