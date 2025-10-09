@@ -28,7 +28,4 @@ def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, print_iteration
     return output_data, optimized_gen
 
 
-if __name__ == "__main__":
-    # Example usage: user edits this line with their JSON path
-    main("./examples/simple_example_with_transformer.json")
 
