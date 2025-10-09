@@ -17,4 +17,4 @@ def test_writer():
     network_states_to_dict(power_flow_solver.base_output_data)
     gen_update = np.array([[1000.0, 500.0]])
     setpoints_to_dict(gen_update)
-    save_results(power_flow_solver.base_output_data, gen_update, output_file=None)
+    save_results(power_flow_solver.base_output_data, gen_update, output_file='tests/output/test_writer.json')

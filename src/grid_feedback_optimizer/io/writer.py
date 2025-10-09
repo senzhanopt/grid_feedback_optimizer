@@ -35,6 +35,7 @@ def save_results(optimized_output_data, optimized_gen: np.ndarray, iterates=None
     - iterates: optional list of per-iteration states
     - output_file: path to save JSON
     """
+
     data = {
         "status": "success",
         "metadata": {

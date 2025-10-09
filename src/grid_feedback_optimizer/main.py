@@ -4,7 +4,7 @@ from grid_feedback_optimizer.io.writer import save_results
 from grid_feedback_optimizer.engine.solve import solve
 
 
-def main(json_path: str, output_file: str | None = "optimization_results.json",
+def main(json_path: str, output_file: str = "optimization_results.json",
          max_iter: int = 100, tol: float = 1e-4, 
          delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, 
          record_iterates: bool = True):
@@ -22,8 +22,7 @@ def main(json_path: str, output_file: str | None = "optimization_results.json",
                                        delta_p = delta_p, delta_q = delta_q,
                                        alpha = alpha, record_iterates = record_iterates)
     
-    if output_file:
-        save_results(optimized_output_data = optimized_output_data, optimized_gen = optimized_gen, 
+    save_results(optimized_output_data = optimized_output_data, optimized_gen = optimized_gen, 
                  iterates = iterates, output_file = output_file)
 
 
