@@ -22,12 +22,16 @@ class GradientProjectionOptimizer:
         """    
         n_bus = len(network.buses)
         n_line = len(network.lines)
+        self.n_transformer = len(network.transformers)
         n_gen = len(network.renew_gens)
 
         # Parameters  
         self.u_pu_meas = cp.Parameter(n_bus)
         self.P_line_meas = cp.Parameter(n_line)
         self.Q_line_meas = cp.Parameter(n_line)
+        if self.n_transformer >= 1:
+            self.P_transformer_meas = cp.Parameter(self.n_transformer)
+            self.Q_transformer_meas = cp.Parameter(self.n_transformer)
         self.p_gen_last = cp.Parameter(n_gen)
         self.q_gen_last = cp.Parameter(n_gen)
 
@@ -51,14 +55,23 @@ class GradientProjectionOptimizer:
                  + sensitivities["du_dq"]@(self.q_gen - self.q_gen_last) >= np.array([bus.u_pu_min for bus in network.buses])]
         
         # line
-        
         for l in range(n_line):
             line = network.lines[l]
             s_line = line.i_n * network.buses[line.from_bus].u_rated
             cons += [cp.SOC(s_line, cp.hstack([
                 self.P_line_meas[l] + sensitivities["dP_line_dp"][l,:]@(self.p_gen - self.p_gen_last) + sensitivities["dP_line_dq"][l,:]@(self.q_gen - self.q_gen_last),
                 self.Q_line_meas[l] + sensitivities["dQ_line_dp"][l,:]@(self.p_gen - self.p_gen_last) + sensitivities["dQ_line_dq"][l,:]@(self.q_gen - self.q_gen_last)
-            ]))]     
+            ]))]    
+
+        # transformer
+        if self.n_transformer >= 1:
+            for t in range(self.n_transformer):
+                transformer = network.transformers[t]
+                s_transformer = transformer.sn
+                cons += [cp.SOC(s_transformer, cp.hstack([
+                    self.P_transformer_meas[t] + sensitivities["dP_transformer_dp"][t,:]@(self.p_gen - self.p_gen_last) + sensitivities["dP_transformer_dq"][t,:]@(self.q_gen - self.q_gen_last),
+                    self.Q_transformer_meas[t] + sensitivities["dQ_transformer_dp"][t,:]@(self.p_gen - self.p_gen_last) + sensitivities["dQ_transformer_dq"][t,:]@(self.q_gen - self.q_gen_last)
+                ]))]                 
         
         # Objective
         grad_p = self.p_gen_last - np.array([gen.p_max for gen in network.renew_gens])
@@ -81,7 +94,7 @@ class GradientProjectionOptimizer:
         Parameters
         ----------
         param_dict : dict
-            Must contain keys: "alpha", "u_pu_meas", "P_line_meas", "Q_line_meas",
+            Must contain keys: "u_pu_meas", "P_line_meas", "Q_line_meas",
             "p_gen_last", "q_gen_last"
         
         Returns
@@ -95,6 +108,10 @@ class GradientProjectionOptimizer:
         self.Q_line_meas.value = param_dict["Q_line_meas"]
         self.p_gen_last.value = param_dict["p_gen_last"]
         self.q_gen_last.value = param_dict["q_gen_last"]
+        if self.n_transformer >= 1:
+            self.P_transformer_meas.value = param_dict["P_transformer_meas"]
+            self.Q_transformer_meas.value = param_dict["Q_transformer_meas"]
+        
 
         try:
             self.prob.solve()
