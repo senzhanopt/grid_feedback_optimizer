@@ -23,7 +23,7 @@ def test_optimization_from_example():
         "q_gen_last": np.array([0.0]),
     }
 
-    print(optimizer.solve_problem(param_dict))
+    optimizer.solve_problem(param_dict)
 
 def test_optimization_from_example_with_transformer():
 
@@ -46,4 +46,4 @@ def test_optimization_from_example_with_transformer():
         "q_gen_last": np.array([0.0]),
     }
 
-    print(optimizer.solve_problem(param_dict))
+    optimizer.solve_problem(param_dict)

@@ -8,7 +8,7 @@ from power_grid_model import ComponentType
 
 def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
           delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, 
-          print_iteration: bool = False, record_iterates: bool = True):
+          record_iterates: bool = True):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
@@ -18,14 +18,6 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
     power_flow_solver = PowerFlowSolver(network)
     sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q)
     optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha)
-
-    # Base case
-    print("==== Iteration 0 (Base) ====")
-    print_component(power_flow_solver.base_output_data, "node")
-    print_component(power_flow_solver.base_output_data, "line")
-    if n_transformer >= 1:
-        print_component(power_flow_solver.base_output_data, "transformer")
-
 
     # Iterative loop
     output_data = copy.deepcopy(power_flow_solver.base_output_data)
@@ -63,13 +55,6 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
                 "gen_update": gen_update.copy(),
                 "output_data": copy.deepcopy(output_data)
             })
-
-        if print_iteration:
-            print(f"==== Iteration {k} ====")
-            print_component(output_data, "node")
-            print_component(output_data, "line")
-            if n_transformer >= 1:
-                print_component(output_data, "transformer")
 
         # 4. Check convergence
         if np.max(np.abs(gen_update-np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"])))) < tol:

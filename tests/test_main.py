@@ -3,8 +3,8 @@ from grid_feedback_optimizer.main import main
 
 def test_main_simple_example():
     # Example usage: user edits this line with their JSON path
-    main("./examples/simple_example.json")
+    main("./examples/simple_example.json", output_file="tests/output/optimization_results.json")
 
 def test_main_simple_example_with_transformer():
     # Example usage: user edits this line with their JSON path
-    main("./examples/simple_example_with_transformer.json")
+    main("./examples/simple_example_with_transformer.json", output_file="tests/output/optimization_results.json")

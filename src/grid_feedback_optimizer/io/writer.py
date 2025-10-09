@@ -25,7 +25,7 @@ def setpoints_to_dict(gen_update: np.ndarray):
     }
     return gen_dict
 
-def save_results(optimized_output_data, optimized_gen: np.ndarray, iterates=None, output_file="tests/output/optimization_results.json"):
+def save_results(optimized_output_data, optimized_gen: np.ndarray, iterates=None, output_file="optimization_results.json"):
     """
     Save the results of the grid optimization in JSON format.
     
