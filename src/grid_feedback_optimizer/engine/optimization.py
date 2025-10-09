@@ -57,7 +57,7 @@ class GradientProjectionOptimizer:
         # line
         for l in range(n_line):
             line = network.lines[l]
-            s_line = line.i_n * network.buses[line.from_bus].u_rated
+            s_line = np.sqrt(3) * line.i_n * network.buses[line.from_bus].u_rated
             cons += [cp.SOC(s_line, cp.hstack([
                 self.P_line_meas[l] + sensitivities["dP_line_dp"][l,:]@(self.p_gen - self.p_gen_last) + sensitivities["dP_line_dq"][l,:]@(self.q_gen - self.q_gen_last),
                 self.Q_line_meas[l] + sensitivities["dQ_line_dp"][l,:]@(self.p_gen - self.p_gen_last) + sensitivities["dQ_line_dq"][l,:]@(self.q_gen - self.q_gen_last)
