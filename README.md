@@ -65,7 +65,7 @@ Optional parameters (via Python function call):
 **Python usage example:**
 
 ```python
-from src.main import main
+from grid_feedback_optimizer.main import main
 
 output_data, optimized_gen = main(
     json_path="./examples/simple_example.json",
