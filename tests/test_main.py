@@ -1,4 +1,3 @@
-from pathlib import Path
 from grid_feedback_optimizer.main import main
 
 def test_main_simple_example():
