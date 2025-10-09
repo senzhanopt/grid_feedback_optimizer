@@ -174,3 +174,9 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+
+# Ignore all files in tests/results
+tests/results/*
+
+# But keep the folder itself
+!tests/results/.gitkeep
