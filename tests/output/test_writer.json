@@ -1,0 +1,29 @@
+{
+    "status": "success",
+    "metadata": {
+        "timestamp": "2025-10-09T20:56:31.879136",
+        "iterations": 0
+    },
+    "optimized_setpoints": {
+        "p": [
+            1000.0
+        ],
+        "q": [
+            500.0
+        ]
+    },
+    "network_states": {
+        "voltages": [
+            0.9999995247842168,
+            1.0124035242549663,
+            1.0809105963928882
+        ],
+        "line_loading": [
+            1.3364009168028448
+        ],
+        "transformer_loading": [
+            1.170872801727214
+        ]
+    },
+    "iterates": []
+}
