@@ -22,11 +22,11 @@ This package is designed for experimenting with **voltage regulation** and **con
 ```
 grid_feedback_optimizer/
 src/
-    main.py
     grid_feedback_optimizer/
         io/           # Loaders and I/O
         engine/       # Solver / optimization logic
         utils/        # Helper functions
+        main.py
 examples/           # Example JSON network files
 tests/              # Unit tests
 requirements.txt    # Python dependencies
@@ -53,7 +53,7 @@ pip install -r requirements.txt
 Run the optimizer with an example JSON network:
 
 ```bash
-python src/main.py ./examples/simple_example.json
+python src/grid_feedback_optimizer/main.py ./examples/simple_example.json
 ```
 
 Optional parameters (via Python function call):
