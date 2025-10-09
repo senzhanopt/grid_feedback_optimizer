@@ -2,10 +2,11 @@ from pathlib import Path
 from grid_feedback_optimizer.models.network import Network
 from grid_feedback_optimizer.io.loader import load_network
 
-# Path to the example JSON in your project
-EXAMPLE_JSON = Path(__file__).parent.parent / "examples" / "simple_example.json"
-
 def test_load_network_from_example():
+
+    # Path to the example JSON in your project
+    EXAMPLE_JSON = Path(__file__).parent.parent / "examples" / "simple_example.json"
+
     # Ensure the example file exists
     assert EXAMPLE_JSON.exists(), f"Example JSON not found: {EXAMPLE_JSON}"
 

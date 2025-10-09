@@ -21,6 +21,9 @@ def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, print_iteration
     print("==== Final Results ====")
     print_component(output_data, "node")
     print_component(output_data, "line")
+    n_transformer = len(network.transformers)
+    if n_transformer >= 1:
+        print_component(output_data, "transformer")
 
     return output_data, optimized_gen
 

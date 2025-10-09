@@ -3,10 +3,12 @@ import numpy as np
 from grid_feedback_optimizer.io.loader import load_network
 from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
 
-# Path to the example JSON in your project
-EXAMPLE_JSON = Path(__file__).parent.parent / "examples" / "simple_example.json"
+
 
 def test_optimization_from_example():
+
+    # Path to the example JSON in your project
+    EXAMPLE_JSON = Path(__file__).parent.parent / "examples" / "simple_example.json"
 
     # Load the network
     network = load_network(EXAMPLE_JSON)
