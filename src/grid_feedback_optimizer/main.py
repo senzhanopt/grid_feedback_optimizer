@@ -1,11 +1,14 @@
 from pathlib import Path
 from grid_feedback_optimizer.io.loader import load_network
+from grid_feedback_optimizer.io.writer import save_results
 from grid_feedback_optimizer.engine.solve import solve
 from grid_feedback_optimizer.utils.utils import print_component
 
 
 def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, 
-         delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, print_iteration: bool = False):
+         delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, 
+         print_iteration: bool = False, record_iterates: bool = True,
+         output_file = "tests/output/optimization_results.json"):
     """
     Run grid feedback optimizer from a JSON file path provided as string.
     """
@@ -16,19 +19,22 @@ def main(json_path: str, max_iter: int = 100, tol: float = 1e-4,
     network = load_network(json_path)
 
     # Solve
-    output_data, optimized_gen = solve(network, max_iter = max_iter, tol = tol, 
+    optimized_output_data, optimized_gen, iterates = solve(network, max_iter = max_iter, tol = tol, 
                                        delta_p = delta_p, delta_q = delta_q,
-                                       alpha = alpha, print_iteration = print_iteration)
+                                       alpha = alpha, print_iteration = print_iteration,
+                                       record_iterates = record_iterates)
+    save_results(optimized_output_data = optimized_output_data, optimized_gen = optimized_gen, 
+                 iterates = iterates, output_file = output_file)
 
     # Print final results
     print("==== Final Results ====")
-    print_component(output_data, "node")
-    print_component(output_data, "line")
+    print_component(optimized_output_data, "node")
+    print_component(optimized_output_data, "line")
     n_transformer = len(network.transformers)
     if n_transformer >= 1:
-        print_component(output_data, "transformer")
+        print_component(optimized_output_data, "transformer")
 
-    return output_data, optimized_gen
+    return optimized_output_data, optimized_gen
 
 
 

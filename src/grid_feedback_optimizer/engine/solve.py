@@ -7,7 +7,8 @@ import copy
 from power_grid_model import ComponentType
 
 def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
-          delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, print_iteration: bool = False):
+          delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, 
+          print_iteration: bool = False, record_iterates: bool = True):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
@@ -29,6 +30,8 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
     # Iterative loop
     output_data = copy.deepcopy(power_flow_solver.base_output_data)
     gen_update = np.column_stack((power_flow_solver.base_p_gen,power_flow_solver.base_q_gen))
+    iterates = [] if record_iterates else None
+
     for k in range(1,max_iter+1):
         # 1. Get current network state
         u_pu_meas = np.array(output_data[ComponentType.node]["u_pu"])
@@ -48,10 +51,19 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
         if n_transformer >= 1:
             param_dict["P_transformer_meas"] = P_transformer_meas
             param_dict["Q_transformer_meas"] = Q_transformer_meas
+
         gen_update = optimizer.solve_problem(param_dict)
 
         # 3. Run power flow with updated setpoints
         output_data = power_flow_solver.run(gen_update=gen_update)
+
+        if record_iterates:
+            iterates.append({
+                "iteration": k,
+                "gen_update": gen_update.copy(),
+                "output_data": copy.deepcopy(output_data)
+            })
+
         if print_iteration:
             print(f"==== Iteration {k} ====")
             print_component(output_data, "node")
@@ -65,4 +77,4 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
             break
     
         
-    return output_data, gen_update
+    return output_data, gen_update, iterates
