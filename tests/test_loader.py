@@ -23,3 +23,25 @@ def test_load_network_from_example():
     # Check generator defaults
     gen = network.renew_gens[0]
     assert gen.q_norm == 0.0 or gen.q_norm is not None
+
+def test_load_network_from_example_with_transformer():
+
+    # Path to the example JSON in your project
+    EXAMPLE_JSON = Path(__file__).parent.parent / "examples" / "simple_example_with_transformer.json"
+
+    # Ensure the example file exists
+    assert EXAMPLE_JSON.exists(), f"Example JSON not found: {EXAMPLE_JSON}"
+
+    # Load the network
+    network = load_network(EXAMPLE_JSON)
+
+    # Check that returned object is a Network
+    assert isinstance(network, Network)
+
+    # Minimal checks on the data
+    assert len(network.buses) > 0
+    assert len(network.renew_gens) > 0
+
+    # Check generator defaults
+    gen = network.renew_gens[0]
+    assert gen.q_norm == 0.0 or gen.q_norm is not None
