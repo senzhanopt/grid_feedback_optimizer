@@ -4,7 +4,8 @@ from grid_feedback_optimizer.engine.solve import solve
 from grid_feedback_optimizer.utils.utils import print_component
 
 
-def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, print_iteration = False):
+def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, 
+         delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, print_iteration = False):
     """
     Run grid feedback optimizer from a JSON file path provided as string.
     """
@@ -15,7 +16,9 @@ def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, print_iteration
     network = load_network(json_path)
 
     # Solve
-    output_data, optimized_gen = solve(network, max_iter=max_iter, tol=tol, print_iteration = print_iteration)
+    output_data, optimized_gen = solve(network, max_iter = max_iter, tol = tol, 
+                                       delta_p = delta_p, delta_q = delta_q,
+                                       alpha = alpha, print_iteration = print_iteration)
 
     # Print final results
     print("==== Final Results ====")

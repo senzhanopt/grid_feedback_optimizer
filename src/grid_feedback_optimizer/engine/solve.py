@@ -6,7 +6,8 @@ from grid_feedback_optimizer.utils.utils import print_component
 import copy
 from power_grid_model import ComponentType
 
-def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iteration = False):
+def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
+          delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, print_iteration: bool = False):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
@@ -14,8 +15,8 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
     # Initialize solver and optimizer
     n_transformer = len(network.transformers)
     power_flow_solver = PowerFlowSolver(network)
-    sensitivities = power_flow_solver.obtain_sensitivity()
-    optimizer = GradientProjectionOptimizer(network, sensitivities)
+    sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q)
+    optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha)
 
     # Base case
     print("==== Iteration 0 (Base) ====")

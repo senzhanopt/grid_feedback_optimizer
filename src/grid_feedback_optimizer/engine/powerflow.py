@@ -22,7 +22,7 @@ class PowerFlowSolver:
     def __init__(self, network: Network):
         self.build_network(network)
 
-    def build_network(self, network):
+    def build_network(self, network: Network):
         id_count = 0
         # node
         n_bus = len(network.buses)
@@ -153,7 +153,7 @@ class PowerFlowSolver:
 
         return output_data
 
-    def obtain_sensitivity(self, delta_p=1.0, delta_q=1.0):
+    def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0):
         """
         Compute sensitivities of bus voltages and line/transformer power flows to small perturbations
         in generator power injections (p and q) around the default operating point.

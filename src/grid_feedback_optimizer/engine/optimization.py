@@ -8,14 +8,14 @@ class GradientProjectionOptimizer:
     Caches the CVXPY problem to allow fast updates of parameters.
     """
 
-    def __init__(self, network: Network, sensitivities: dict, alpha = 0.5):
+    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5):
         """
         Initialize optimizer and build cached problem.
         """
         self.prob = self.build_problem(network, sensitivities, alpha)
 
 
-    def build_problem(self, network, sensitivities, alpha, c_q = 0.1):
+    def build_problem(self, network: Network, sensitivities: dict, alpha: float, c_q = 0.1):
         """
         Build CVXPY problem with Parameters and Variables.
         Only called once. Returns dictionary with problem and variables/parameters.
