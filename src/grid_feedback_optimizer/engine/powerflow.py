@@ -107,6 +107,7 @@ class PowerFlowSolver:
         input_data = {
             ComponentType.node: node,
             ComponentType.line: line,
+            ComponentType.transformer: transformer,
             ComponentType.source: source,
             ComponentType.sym_load: sym_load,
             ComponentType.sym_gen: sym_gen,
@@ -151,7 +152,7 @@ class PowerFlowSolver:
 
     def obtain_sensitivity(self, delta_p=1.0, delta_q=1.0):
         """
-        Compute sensitivities of bus voltages and line power flows to small perturbations
+        Compute sensitivities of bus voltages and line/transformer power flows to small perturbations
         in generator power injections (p and q) around the default operating point.
 
         Parameters
