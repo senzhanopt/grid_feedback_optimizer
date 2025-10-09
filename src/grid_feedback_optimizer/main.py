@@ -5,7 +5,7 @@ from grid_feedback_optimizer.utils.utils import print_component
 
 
 def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, 
-         delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, print_iteration = False):
+         delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, print_iteration: bool = False):
     """
     Run grid feedback optimizer from a JSON file path provided as string.
     """
