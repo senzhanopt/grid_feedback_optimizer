@@ -30,5 +30,5 @@ def main(json_path: str, max_iter: int = 100, tol: float = 1e-4, print_iteration
 
 if __name__ == "__main__":
     # Example usage: user edits this line with their JSON path
-    main("./examples/simple_example.json")
+    main("./examples/simple_example_with_transformer.json")
 

@@ -21,6 +21,8 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
     print("==== Iteration 0 (Base) ====")
     print_component(power_flow_solver.base_output_data, "node")
     print_component(power_flow_solver.base_output_data, "line")
+    if n_transformer >= 1:
+        print_component(power_flow_solver.base_output_data, "transformer")
 
 
     # Iterative loop
@@ -53,6 +55,8 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
             print(f"==== Iteration {k} ====")
             print_component(output_data, "node")
             print_component(output_data, "line")
+            if n_transformer >= 1:
+                print_component(output_data, "transformer")
 
         # 4. Check convergence
         if np.max(np.abs(gen_update-np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"])))) < tol:
