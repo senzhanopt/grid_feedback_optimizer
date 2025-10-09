@@ -2,12 +2,18 @@
   "buses": [
     {
       "index": 0,
-      "u_rated": 400.0,
+      "u_rated": 10000.0,
       "u_pu_max": 1.05,
       "u_pu_min": 0.95
     },
     {
       "index": 1,
+      "u_rated": 400.0,
+      "u_pu_max": 1.05,
+      "u_pu_min": 0.95
+    },
+    {
+      "index": 2,
       "u_rated": 400.0,
       "u_pu_max": 1.05,
       "u_pu_min": 0.95
@@ -17,13 +23,36 @@
   "lines": [
     {
       "index": 0,
-      "from_bus": 0,
-      "to_bus": 1,
+      "from_bus": 1,
+      "to_bus": 2,
       "r1": 0.25,
       "x1": 0.2,
       "c1": 1e-5,
       "tan1": 0.0,
       "i_n": 50.0
+    }
+  ],
+
+  "transformers": [
+    {
+      "index": 0,
+      "from_bus": 0,
+      "to_bus": 1,
+      "u1": 1e4,
+      "u2": 4e2,
+      "sn": 4e4,
+      "uk": 0.1,
+      "pk": 1e3,
+      "i0": 1e-5,
+      "p0": 0.1,
+      "winding_from": 2,
+      "winding_to": 1,
+      "clock": 5,
+      "tap_side": 0,
+      "tap_min": -11,
+      "tap_max": 9,
+      "tap_size": 100,
+      "tap_pos": 0
     }
   ],
 
@@ -38,7 +67,7 @@
   "renew_gens": [
     {
       "index": 0,
-      "bus": 1,
+      "bus": 2,
       "p_max": 60000.0,
       "s_inv": 60000.0
     }
@@ -47,7 +76,7 @@
   "loads": [
     {
       "index": 0,
-      "bus": 1,
+      "bus": 2,
       "p_norm": 10000.0,
       "q_norm": 2000.0
     }

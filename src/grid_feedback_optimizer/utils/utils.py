@@ -12,3 +12,6 @@ def print_component(output_data, component_type):
     elif component_type == "line":
         print(pd.DataFrame(output_data[ComponentType.line]))
         print()
+    elif component_type == "transformer":
+        print(pd.DataFrame(output_data[ComponentType.transformer]))
+        print()       

@@ -12,6 +12,7 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
     between power flow and optimization.
     """
     # Initialize solver and optimizer
+    n_transformer = len(network.transformers)
     power_flow_solver = PowerFlowSolver(network)
     sensitivities = power_flow_solver.obtain_sensitivity()
     optimizer = GradientProjectionOptimizer(network, sensitivities)
@@ -20,6 +21,8 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
     print("==== Iteration 0 (Base) ====")
     print_component(power_flow_solver.base_output_data, "node")
     print_component(power_flow_solver.base_output_data, "line")
+    if n_transformer >= 1:
+        print_component(power_flow_solver.base_output_data, "transformer")
 
 
     # Iterative loop
@@ -30,7 +33,9 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
         u_pu_meas = np.array(output_data[ComponentType.node]["u_pu"])
         P_line_meas = np.array(output_data[ComponentType.line]["p_from"])
         Q_line_meas = np.array(output_data[ComponentType.line]["q_from"])
-
+        if n_transformer >= 1:
+            P_transformer_meas = np.array(output_data[ComponentType.transformer]["p_from"])
+            Q_transformer_meas = np.array(output_data[ComponentType.transformer]["q_from"])
         # 2. Run optimization step → propose new setpoints
         param_dict = {
             "u_pu_meas": u_pu_meas,
@@ -39,6 +44,9 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
             "p_gen_last": gen_update[:,0],
             "q_gen_last": gen_update[:,1],
         }
+        if n_transformer >= 1:
+            param_dict["P_transformer_meas"] = P_transformer_meas
+            param_dict["Q_transformer_meas"] = Q_transformer_meas
         gen_update = optimizer.solve_problem(param_dict)
 
         # 3. Run power flow with updated setpoints
@@ -47,6 +55,8 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4, print_iterat
             print(f"==== Iteration {k} ====")
             print_component(output_data, "node")
             print_component(output_data, "line")
+            if n_transformer >= 1:
+                print_component(output_data, "transformer")
 
         # 4. Check convergence
         if np.max(np.abs(gen_update-np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"])))) < tol:
