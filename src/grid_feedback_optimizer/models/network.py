@@ -69,7 +69,7 @@ class Load(BaseModel):
 class Network(BaseModel):
     buses: List[Bus]
     lines: List[Line]
-    transformers: List[Transformer]
+    transformers: List[Transformer] = []
     sources: List[Source]
     renew_gens: List[RenewGen]
     loads: List[Load]
