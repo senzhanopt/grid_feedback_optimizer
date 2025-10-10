@@ -14,7 +14,7 @@ def test_optimization_from_example():
     network = load_network(EXAMPLE_JSON)
     power_flow_solver = PowerFlowSolver(network)
     power_flow_solver.run(gen_update =np.array([50000.0, 0.0]).reshape(1,2))
-    print(power_flow_solver.obtain_sensitivity())
+    power_flow_solver.obtain_sensitivity()
 
 
 
@@ -27,4 +27,4 @@ def test_optimization_from_example_with_transformer():
     network = load_network(EXAMPLE_JSON)
     power_flow_solver = PowerFlowSolver(network)
     power_flow_solver.run(gen_update =np.array([50000.0, 0.0]).reshape(1,2))
-    print(power_flow_solver.obtain_sensitivity())
+    power_flow_solver.obtain_sensitivity()
