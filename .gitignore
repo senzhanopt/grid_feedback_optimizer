@@ -176,7 +176,7 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python
 
 # Ignore all files in tests/results
-tests/results/*
+tests/output/*
 
 # But keep the folder itself
-!tests/results/.gitkeep
+!tests/output/.gitkeep
