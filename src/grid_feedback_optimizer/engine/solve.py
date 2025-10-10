@@ -2,9 +2,9 @@ import numpy as np
 from grid_feedback_optimizer.models.network import Network
 from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
 from grid_feedback_optimizer.engine.optimization import GradientProjectionOptimizer
-from grid_feedback_optimizer.utils.utils import print_component
 import copy
 from power_grid_model import ComponentType
+from grid_feedback_optimizer.models.solve_data import SolveResults
 
 def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
           delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, 
@@ -22,7 +22,7 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
     # Iterative loop
     output_data = copy.deepcopy(power_flow_solver.base_output_data)
     gen_update = np.column_stack((power_flow_solver.base_p_gen,power_flow_solver.base_q_gen))
-    iterates = [] if record_iterates else None
+    iterates = []
 
     for k in range(1,max_iter+1):
         # 1. Get current network state
@@ -62,4 +62,4 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
             break
     
         
-    return output_data, gen_update, iterates
+    return SolveResults(final_output=output_data, final_gen_update=gen_update, iterations=iterates)
