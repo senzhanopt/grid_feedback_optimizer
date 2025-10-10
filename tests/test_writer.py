@@ -1,6 +1,6 @@
 from pathlib import Path
-from grid_feedback_optimizer.io.loader import load_network
-from grid_feedback_optimizer.io.writer import network_states_to_dict, setpoints_to_dict, save_results
+from grid_feedback_optimizer.models.loader import load_network
+from grid_feedback_optimizer.models.writer import network_states_to_dict, setpoints_to_dict, save_results
 from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
 from power_grid_model import ComponentType
 import numpy as np

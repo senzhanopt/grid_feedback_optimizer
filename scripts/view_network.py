@@ -1,5 +1,5 @@
 from pathlib import Path
-from grid_feedback_optimizer.io.loader import load_network
+from grid_feedback_optimizer.models.loader import load_network
 
 # Path to your example JSON
 json_file = Path(__file__).parent.parent / "examples" / "simple_example.json"

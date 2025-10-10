@@ -1,6 +1,6 @@
 from pathlib import Path
 from grid_feedback_optimizer.models.network import Network
-from grid_feedback_optimizer.io.loader import load_network
+from grid_feedback_optimizer.models.loader import load_network
 
 def test_load_network_from_example():
 
