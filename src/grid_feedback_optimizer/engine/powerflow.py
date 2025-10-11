@@ -132,7 +132,36 @@ class PowerFlowSolver:
         self.base_output_data = output_data
         self.base_p_gen = sym_gen["p_specified"]
         self.base_q_gen = sym_gen["q_specified"]
+        self.u_pu_max = np.array([bus.u_pu_max for bus in network.buses])
+        self.u_pu_min = np.array([bus.u_pu_min for bus in network.buses])
     
+    @property
+    def is_congested(self):
+        """
+        Check if the network is congested.
+        Returns True if any of the following occur:
+        - Bus voltage exceeds limits (u_pu_max or u_pu_min)
+        - Line or transformer loading exceeds 1.0 (100%)
+        """
+        # Bus voltage check
+        bus_voltages = self.base_output_data[ComponentType.node]["u_pu"]
+        voltage_violation = np.any(bus_voltages > self.u_pu_max) or np.any(bus_voltages < self.u_pu_min)
+        
+        # Line loading check
+        line_loading = self.base_output_data[ComponentType.line]["loading"]
+        line_overload = np.any(line_loading > 1.0)
+
+        # Transformer loading check
+        if self.n_transformer >= 1:
+            transformer_loading = self.base_output_data[ComponentType.transformer]["loading"]
+            transformer_overload = np.any(transformer_loading > 1.0)
+        else:
+            transformer_overload = False
+
+        # Return True if any violation occurs
+        return voltage_violation or line_overload or transformer_overload
+        
+
     def run(self, gen_update: np.ndarray = None):
         """
         Re-run power flow in optimization iterations.
@@ -152,7 +181,7 @@ class PowerFlowSolver:
         )
 
         return output_data
-
+    
     def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0):
         """
         Compute sensitivities of bus voltages and line/transformer power flows to small perturbations
