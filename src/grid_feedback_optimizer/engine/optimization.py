@@ -46,7 +46,7 @@ class GradientProjectionOptimizer:
         for i in range(n_gen):
             cons += [self.p_gen[i] <= network.renew_gens[i].p_max]
             cons += [self.p_gen[i] >= network.renew_gens[i].p_min]
-            cons += [cp.SOC(network.renew_gens[i].s_inv, cp.hstack([self.p_gen[i], self.q_gen[i]]))]
+            cons += [cp.SOC(1.0, cp.hstack([self.p_gen[i], self.q_gen[i]])/(network.renew_gens[i].s_inv))]
         
         # voltage
         cons += [self.u_pu_meas + sensitivities["du_dp"]@(self.p_gen - self.p_gen_last)
@@ -58,25 +58,25 @@ class GradientProjectionOptimizer:
         for l in range(n_line):
             line = network.lines[l]
             s_line = np.sqrt(3) * line.i_n * network.buses[line.from_bus].u_rated
-            cons += [cp.SOC(s_line, cp.hstack([
+            cons += [cp.SOC(1.0, cp.hstack([
                 self.P_line_meas[l] + sensitivities["dP_line_dp"][l,:]@(self.p_gen - self.p_gen_last) + sensitivities["dP_line_dq"][l,:]@(self.q_gen - self.q_gen_last),
                 self.Q_line_meas[l] + sensitivities["dQ_line_dp"][l,:]@(self.p_gen - self.p_gen_last) + sensitivities["dQ_line_dq"][l,:]@(self.q_gen - self.q_gen_last)
-            ]))]    
+            ])/s_line)]    
 
         # transformer
         if self.n_transformer >= 1:
             for t in range(self.n_transformer):
                 transformer = network.transformers[t]
                 s_transformer = transformer.sn
-                cons += [cp.SOC(s_transformer, cp.hstack([
+                cons += [cp.SOC(1.0, cp.hstack([
                     self.P_transformer_meas[t] + sensitivities["dP_transformer_dp"][t,:]@(self.p_gen - self.p_gen_last) + sensitivities["dP_transformer_dq"][t,:]@(self.q_gen - self.q_gen_last),
                     self.Q_transformer_meas[t] + sensitivities["dQ_transformer_dp"][t,:]@(self.p_gen - self.p_gen_last) + sensitivities["dQ_transformer_dq"][t,:]@(self.q_gen - self.q_gen_last)
-                ]))]                 
+                ])/s_transformer)]                 
         
         # Objective
         grad_p = self.p_gen_last - np.array([gen.p_max for gen in network.renew_gens])
         grad_q = c_q * self.q_gen_last
-        
+
         objective = cp.Minimize(
             cp.sum_squares(self.p_gen - (self.p_gen_last - alpha * grad_p)) +
             cp.sum_squares(self.q_gen - (self.q_gen_last - alpha * grad_q))
