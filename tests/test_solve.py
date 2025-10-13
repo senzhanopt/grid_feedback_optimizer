@@ -12,6 +12,7 @@ def test_solve_from_example():
     # Load the network
     network = load_network(EXAMPLE_JSON)
     res = solve(network)
+    res.print_summary()
 
 def test_solve_from_example_with_transformer():
 
@@ -20,6 +21,7 @@ def test_solve_from_example_with_transformer():
     # Load the network
     network = load_network(EXAMPLE_JSON)
     res = solve(network)
+    res.print_summary()
     
 if __name__ == "__main__":
     test_solve_from_example()

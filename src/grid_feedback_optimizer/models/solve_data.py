@@ -59,3 +59,16 @@ class SolveResults(BaseModel):
             json.dump(data, f, indent=4)
 
         print(f"✅ Results saved to {output_file}")
+
+    def print_summary(self) -> None:
+        """Print a concise summary of the optimization results."""
+        print("\n📊 Optimization Summary:")
+        print(f"Total iterations: {len(self.iterations)}")
+        print(f"Final generator setpoints (p): {self.final_gen_update[:, 0]}")
+        print(f"Final generator setpoints (q): {self.final_gen_update[:, 1]}")
+        net_dict = self._network_states_to_dict(self.final_output)
+        print(f"Node voltages (p.u.): {net_dict['voltages']}")
+        print(f"Line loadings (max 1.0): {net_dict['line_loading']}")
+        if "transformer_loading" in net_dict:
+            print(f"Transformer loadings (max 1.0): {net_dict['transformer_loading']}")
+        print("✅ Summary printed successfully.\n")
