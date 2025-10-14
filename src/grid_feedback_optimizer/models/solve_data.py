@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 from datetime import datetime
 import numpy as np
 import json
+import matplotlib.pyplot as plt
 from power_grid_model import ComponentType
 
 
@@ -72,3 +73,77 @@ class SolveResults(BaseModel):
         if "transformer_loading" in net_dict:
             print(f"Transformer loadings (max 1.0): {net_dict['transformer_loading']}")
         print("✅ Summary printed successfully.\n")
+
+    def plot_iterations(self) -> None:
+        """
+        Plot evolution of voltages, line loadings, transformer loadings,
+        and generator active/reactive powers over optimization iterations.
+
+        Layout: 5 rows * 1 column (shared x-axis: iteration number)
+        """
+        if not self.iterations:
+            print("⚠️ No iteration data available for plotting.")
+            return
+
+        iter_indices = [it["iteration"] for it in self.iterations]
+
+        # === Collect data ===
+        voltages = np.array([
+            it["output_data"][ComponentType.node]["u_pu"] for it in self.iterations
+        ])  # shape: (n_iter, n_nodes)
+
+        lines = np.array([
+            it["output_data"][ComponentType.line]["loading"] for it in self.iterations
+        ])  # shape: (n_iter, n_lines)
+
+        transformers = (
+            np.array([it["output_data"][ComponentType.transformer]["loading"]
+                    for it in self.iterations])
+            if ComponentType.transformer in self.iterations[0]["output_data"]
+            else None
+        )
+
+        gen_p = np.array([it["gen_update"][:, 0] for it in self.iterations])
+        gen_q = np.array([it["gen_update"][:, 1] for it in self.iterations])
+
+        # === Plot ===
+        fig, axes = plt.subplots(5, 1, figsize=(10, 16), sharex=True)
+        fig.suptitle("Optimization Iteration Evolution", fontsize=16, weight='bold')
+
+        # 1️⃣ Voltages
+        axes[0].plot(iter_indices, voltages, marker='o')
+        axes[0].set_ylabel("Voltage [p.u.]")
+        axes[0].set_title("Bus Voltages")
+        axes[0].grid(True, linestyle='--', alpha=0.5)
+
+        # 2️⃣ Line Loadings
+        axes[1].plot(iter_indices, lines, marker='o')
+        axes[1].set_ylabel("Loading")
+        axes[1].set_title("Line Loadings")
+        axes[1].grid(True, linestyle='--', alpha=0.5)
+
+        # 3️⃣ Transformer Loadings (if available)
+        if transformers is not None:
+            axes[2].plot(iter_indices, transformers, marker='o')
+            axes[2].set_ylabel("Loading")
+            axes[2].set_title("Transformer Loadings")
+        else:
+            axes[2].text(0.5, 0.5, "No transformers in model",
+                        ha='center', va='center', fontsize=10, color='gray')
+        axes[2].grid(True, linestyle='--', alpha=0.5)
+
+        # 4️⃣ Generator Active Power (P)
+        axes[3].plot(iter_indices, gen_p, marker='o')
+        axes[3].set_ylabel("p [W]")
+        axes[3].set_title("Generator Active Power")
+        axes[3].grid(True, linestyle='--', alpha=0.5)
+
+        # 5️⃣ Generator Reactive Power (Q)
+        axes[4].plot(iter_indices, gen_q, marker='o')
+        axes[4].set_ylabel("q [VAR]")
+        axes[4].set_xlabel("Iteration")
+        axes[4].set_title("Generator Reactive Power")
+        axes[4].grid(True, linestyle='--', alpha=0.5)
+
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.show()
