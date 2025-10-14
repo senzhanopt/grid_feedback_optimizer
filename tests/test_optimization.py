@@ -2,7 +2,7 @@ from pathlib import Path
 import numpy as np
 from grid_feedback_optimizer.models.loader import load_network
 from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
-from grid_feedback_optimizer.engine.optimization import GradientProjectionOptimizer
+from grid_feedback_optimizer.engine.grad_proj_optimizer import GradientProjectionOptimizer
 
 def test_optimization_from_example():
 

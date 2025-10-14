@@ -1,7 +1,7 @@
 import numpy as np
 from grid_feedback_optimizer.models.network import Network
 from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
-from grid_feedback_optimizer.engine.optimization import GradientProjectionOptimizer
+from grid_feedback_optimizer.engine.grad_proj_optimizer import GradientProjectionOptimizer
 import copy
 from power_grid_model import ComponentType
 from grid_feedback_optimizer.models.solve_data import SolveResults
