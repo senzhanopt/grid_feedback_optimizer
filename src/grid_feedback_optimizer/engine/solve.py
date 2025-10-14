@@ -24,6 +24,13 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
     gen_update = np.column_stack((power_flow_solver.base_p_gen,power_flow_solver.base_q_gen))
     iterates = []
 
+    if record_iterates:
+        iterates.append({
+            "iteration": 0,
+            "gen_update": gen_update.copy(),
+            "output_data": copy.deepcopy(output_data)
+        })
+
     for k in range(1,max_iter+1):
         # 1. Get current network state
         u_pu_meas = np.array(output_data[ComponentType.node]["u_pu"])
