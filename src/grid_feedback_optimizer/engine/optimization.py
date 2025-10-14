@@ -16,7 +16,7 @@ class GradientProjectionOptimizer:
         self.prob = self.build_problem(network, sensitivities, alpha)
 
 
-    def build_problem(self, network: Network, sensitivities: dict, alpha: float, c_q = 0.1):
+    def build_problem(self, network: Network, sensitivities: dict, alpha: float):
         """
         Build CVXPY problem with Parameters and Variables.
         Only called once. Returns dictionary with problem and variables/parameters.
@@ -80,8 +80,10 @@ class GradientProjectionOptimizer:
                 ])/s_transformer)]                 
         
         # Objective
-        grad_p = self.p_gen_last - np.array([gen.p_max for gen in network.renew_gens])
-        grad_q = c_q * self.q_gen_last
+        grad_p = 2.0 * cp.multiply( np.array([gen.c2_p for gen in network.renew_gens]), (self.p_gen_last - np.array([gen.p_norm for gen in network.renew_gens])))
+        grad_p += np.array([gen.c1_p for gen in network.renew_gens])
+        grad_q = 2.0 * cp.multiply(np.array([gen.c2_q for gen in network.renew_gens]), (self.q_gen_last - np.array([gen.q_norm for gen in network.renew_gens])))
+        grad_q += np.array([gen.c1_q for gen in network.renew_gens])
 
         objective = cp.Minimize(
             cp.sum_squares(self.p_gen - (self.p_gen_last - alpha * grad_p) / self.param_scale) +

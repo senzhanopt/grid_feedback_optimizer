@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from power_grid_model import WindingType, BranchSide
 
 # -------- Core Models -------- #
@@ -56,6 +56,26 @@ class RenewGen(BaseModel):
     s_inv: float
     p_min: Optional[float] = 0.0
     q_norm: Optional[float] = 0.0
+    p_norm: Optional[float] = None  # computed after initialization
+
+    @model_validator(mode="after")
+    def compute_p_norm(self):
+        """Compute p_norm only if not provided by user."""
+        if self.p_norm is not None:
+            return self
+    
+        if self.p_min >= 0:
+            self.p_norm = self.p_max
+        elif self.p_max <= 0:
+            self.p_norm = self.p_min
+        else:
+            self.p_norm = 0.0
+        return self
+    
+    c1_p: Optional[float] = 0.0
+    c2_p: float = Field(1.0, ge=0, description="Quadratic cost coefficient (> 0)")
+    c1_q: Optional[float] = 0.0
+    c2_q: float = Field(0.1, ge=0, description="Quadratic cost coefficient (> 0)")
 
 
 class Load(BaseModel):
