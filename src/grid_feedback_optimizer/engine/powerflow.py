@@ -100,7 +100,7 @@ class PowerFlowSolver:
         sym_gen["node"] = [gen.bus for gen in network.renew_gens]
         sym_gen["status"] = [1] * n_gen
         sym_gen["type"] = [LoadGenType.const_power] * n_gen
-        sym_gen["p_specified"] = [gen.p_max for gen in network.renew_gens]
+        sym_gen["p_specified"] = [gen.p_norm for gen in network.renew_gens]
         sym_gen["q_specified"] = [gen.q_norm for gen in network.renew_gens]
         id_count += n_gen
 
