@@ -79,7 +79,55 @@ res_gp.plot_iterations()
 res_gp.save("gp_result.json")
 
 ```
+### Grid components
 
+Follow [power-grid-model](https://power-grid-model.readthedocs.io/en/stable/user_manual/components.html) for definition of buses (nodes), lines, transformers, and sources. 
+
+### RenewGen
+
+`RenewGen` models **controllable generators and power-consuming devices**.
+
+- **Generator:** `p_max > 0` and `p_min >= 0`  
+- **Load:** `p_max < 0` and `p_min <= 0`  
+- **Flexible device:** `p_min < 0 < p_max` (can generate or consume)  
+
+**Key attributes:**
+
+- `index`, `bus`: identifiers  
+- `p_max`, `p_min`: active power limits  
+- `s_inv`: apparent power rating  
+- `p_norm`: normal active power (auto-computed if not set)  
+- `q_norm`: normal reactive power (0.0 if not set)
+- `c1_p`: linear active power cost coefficients  
+- `c2_p`: quadrtic active power cost coefficients for deviation from `p_norm`
+- `c1_q`: linear reactive power cost coefficients  
+- `c2_q`: quadrtic reactive power cost coefficients for deviation from `q_norm`
+
+**Total cost:**  
+
+\[
+\text{Cost} = c1\_p \cdot (p - p\_norm) + c2\_p \cdot (p - p\_norm)^2
+          + c1\_q \cdot (q - q\_norm) + c2\_q \cdot (q - q\_norm)^2
+\]
+
+where `p` and `q` are the actual active and reactive power outputs.
+
+`p_norm` is computed automatically:  
+- Generator → `p_norm = p_max`  
+- Load → `p_norm = p_min`  
+- Flexible → `p_norm = 0`
+
+### Load
+
+`Load` models **non-controllable units**, either a generator or a load.
+
+- **Load:** `p_norm >= 0` 
+- **Generator:** `p_norm < 0`
+
+**Key attributes:**
+
+- `index`, `bus`: identifiers  
+- `p_norm`, `q_norm`: active and reactive power
 
 ## License
 
