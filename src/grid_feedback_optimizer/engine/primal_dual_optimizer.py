@@ -8,7 +8,7 @@ class PrimalDualOptimizer:
     A primal-dual gradient projection feedback optimizer.
     """
     def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5,
-                 alpha_v: float = 1.0, alpha_l: float = 1.0, alpha_t: float = 1.0):
+                 alpha_v: float = 10.0, alpha_l: float = 10.0, alpha_t: float = 10.0):
         """
         Initialize optimizer and build cached problem.
         """
