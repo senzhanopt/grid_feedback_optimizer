@@ -20,9 +20,10 @@ def test_solve_from_example_with_transformer():
     EXAMPLE_JSON = Path(__file__).parent.parent / "examples" / "simple_example_with_transformer.json"
     # Load the network
     network = load_network(EXAMPLE_JSON)
-    res = solve(network)
+    res = solve(network, algorithm = "pd")
     res.print_summary()
+    res.plot_iterations()
     
 if __name__ == "__main__":
-    test_solve_from_example()
+    #test_solve_from_example()
     test_solve_from_example_with_transformer()

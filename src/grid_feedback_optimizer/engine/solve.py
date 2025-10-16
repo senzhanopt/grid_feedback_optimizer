@@ -2,13 +2,15 @@ import numpy as np
 from grid_feedback_optimizer.models.network import Network
 from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
 from grid_feedback_optimizer.engine.grad_proj_optimizer import GradientProjectionOptimizer
+from grid_feedback_optimizer.engine.primal_dual_optimizer import PrimalDualOptimizer
 import copy
 from power_grid_model import ComponentType
 from grid_feedback_optimizer.models.solve_data import SolveResults
 
-def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
-          delta_p: float = 1.0, delta_q: float = 1.0, alpha: float = 0.5, 
-          record_iterates: bool = True):
+def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
+          delta_p: float = 1.0, delta_q: float = 1.0, algorithm = "gp", 
+          alpha: float = 0.5, alpha_v: float = 10.0, 
+          alpha_l: float = 10.0, alpha_t: float = 10.0, record_iterates: bool = True):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
@@ -17,7 +19,14 @@ def solve(network: Network, max_iter: int = 100, tol: float = 1e-4,
     n_transformer = len(network.transformers)
     power_flow_solver = PowerFlowSolver(network)
     sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q)
-    optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha)
+
+    if algorithm == "gp":
+        optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha)
+    elif algorithm == "pd":
+        optimizer = PrimalDualOptimizer(network, sensitivities, alpha = alpha,
+                                                alpha_v = alpha_v, alpha_l = alpha_l, alpha_t = alpha_t)
+    else:
+        raise ValueError(f"Unknown algorithm: {algorithm}")    
 
     # Iterative loop
     output_data = copy.deepcopy(power_flow_solver.base_output_data)
