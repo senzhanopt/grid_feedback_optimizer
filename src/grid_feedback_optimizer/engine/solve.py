@@ -10,7 +10,8 @@ from grid_feedback_optimizer.models.solve_data import SolveResults
 def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
           delta_p: float = 1.0, delta_q: float = 1.0, algorithm: str = "gp", 
           alpha: float = 0.5, alpha_v: float = 10.0, 
-          alpha_l: float = 10.0, alpha_t: float = 10.0, record_iterates: bool = True):
+          alpha_l: float = 10.0, alpha_t: float = 10.0, record_iterates: bool = True,
+          solver: str = "CLARABLE"):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
@@ -21,10 +22,10 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
     sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q)
 
     if algorithm == "gp":
-        optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha)
+        optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha, solver = solver)
     elif algorithm == "pd":
         optimizer = PrimalDualOptimizer(network, sensitivities, alpha = alpha,
-                                                alpha_v = alpha_v, alpha_l = alpha_l, alpha_t = alpha_t)
+                                                alpha_v = alpha_v, alpha_l = alpha_l, alpha_t = alpha_t, solver = solver)
     else:
         raise ValueError(f"Unknown algorithm: {algorithm}")    
 

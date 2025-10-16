@@ -8,7 +8,8 @@ class PrimalDualOptimizer:
     A primal-dual gradient projection feedback optimizer.
     """
     def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5,
-                 alpha_v: float = 10.0, alpha_l: float = 10.0, alpha_t: float = 10.0):
+                 alpha_v: float = 10.0, alpha_l: float = 10.0, alpha_t: float = 10.0,
+                 solver: str = "CLARABLE"):
         """
         Initialize optimizer and build cached problem.
         """
@@ -17,7 +18,7 @@ class PrimalDualOptimizer:
         self.alpha_v = alpha_v
         self.alpha_l = alpha_l
         self.alpha_t = alpha_t
-        self.renew_gen_proj = RenewGenProjection()
+        self.renew_gen_proj = RenewGenProjection(solver = solver)
 
         # === Scaling factors ===
         s_inv_mean = np.mean([gen.s_inv for gen in network.renew_gens])

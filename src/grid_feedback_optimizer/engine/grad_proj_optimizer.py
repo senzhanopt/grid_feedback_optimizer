@@ -9,11 +9,12 @@ class GradientProjectionOptimizer:
     Caches the CVXPY problem to allow fast updates of parameters.
     """
 
-    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5):
+    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5, solver: str = "CLARABEL"):
         """
         Initialize optimizer and build cached problem.
         """
         self.prob = self._build_problem(network, sensitivities, alpha)
+        self.solver = solver
 
 
     def _build_problem(self, network: Network, sensitivities: dict, alpha: float):
@@ -122,7 +123,7 @@ class GradientProjectionOptimizer:
         
 
         try:
-            self.prob.solve(solver = cp.CLARABEL)
+            self.prob.solve(solver = getattr(cp, self.solver))
         except:
             print(self.prob.status)
             # If solver fails, return last known feasible values
