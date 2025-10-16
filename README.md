@@ -103,12 +103,9 @@ Follow [power-grid-model](https://power-grid-model.readthedocs.io/en/stable/user
 - `c1_q`: linear reactive power cost coefficients  
 - `c2_q`: quadrtic reactive power cost coefficients for deviation from `q_norm`
 
-**Total cost:**  
+**Minimization cost function:**  
 
-\[
-\text{Cost} = c1\_p \cdot (p - p\_norm) + c2\_p \cdot (p - p\_norm)^2
-          + c1\_q \cdot (q - q\_norm) + c2\_q \cdot (q - q\_norm)^2
-\]
+Cost = c1_p × p + c2_p × (p - p_norm)² + c1_q × q + c2_q × (q - q_norm)²  
 
 where `p` and `q` are the actual active and reactive power outputs.
 
