@@ -50,6 +50,14 @@ class Source(BaseModel):
 
 
 class RenewGen(BaseModel):
+    """
+    Represents a renewable generator or power-consuming device.
+    
+    Notes:
+        - If p_max > 0 and p_min >= 0 → behaves as a generator.
+        - If p_max <= 0 and p_min <= 0 → behaves as a load/consuming device.
+        - Mixed cases (p_min < 0 < p_max) → flexible device (can consume or generate).
+    """
     index: int
     bus: int
     p_max: float
@@ -79,6 +87,9 @@ class RenewGen(BaseModel):
 
 
 class Load(BaseModel):
+    """
+    Represents a non-controllable unit: either a load or a generator.
+    """
     index: int
     bus: int
     p_norm: float
