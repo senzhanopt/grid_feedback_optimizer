@@ -5,17 +5,19 @@
 
 ## Overview
 
-**Grid Feedback Optimizer** is a Python package that uses **feedback control** to optimize generator and device setpoints in electrical distribution grids.
+**Grid Feedback Optimizer** is a Python package that uses **feedback optimization** to optimize generator and device setpoints in electrical distribution grids.
 It reads a **JSON network description** and iteratively computes optimal setpoints.
 
 This package is designed for experimenting with **voltage regulation** and **congestion management**, providing a flexible framework for feedback-based grid optimization.
 
 ## Features
 
-* Load networks from JSON files.
-* Iterative feedback-based optimization with configurable tolerance and maximum iterations.
-* Print node and line results at the end of the run.
-* Modular design (`io`, `engine`, `utils`) for extensions.
+* Load and simulate networks from JSON files.
+* Iterative feedback optimization using:
+    - **gradient projection (GP)** algorithm,
+    - **primal-dual (PD)** algorithm.
+* Structured input and output data.
+* Modular design (`models`, `engine`, `utils`) for extensions.
 
 ## Repository Structure
 
@@ -23,66 +25,61 @@ This package is designed for experimenting with **voltage regulation** and **con
 grid_feedback_optimizer/
 src/
     grid_feedback_optimizer/
-        io/           # Loaders and I/O
-        engine/       # Solver / optimization logic
+        model/        # Loaders and I/O
+        engine/       # Power flow / optimization logic
         utils/        # Helper functions
         main.py
 examples/           # Example JSON network files
-tests/              # Unit tests
+tests/              # Tests
 requirements.txt    # Python dependencies
 README.md
 ```
 
-## Installation
+## ⚙️ Installation
 
-Clone the repository:
+**Clone the repository:**
 
 ```bash
 git clone https://github.com/senzhanopt/grid_feedback_optimizer.git
 cd grid_feedback_optimizer
 ```
 
-Install dependencies:
-
+**Install dependencies for all parts:**
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
-
-Run the optimizer with an example JSON network:
-
+**Install the project in editable mode**
 ```bash
-python src/grid_feedback_optimizer/main.py ./examples/simple_example.json
+pip install -e .
 ```
 
-Optional parameters (via Python function call):
+## Usage
 
-* `max_iter` (default = 100) — Maximum iterations
-* `tol` (default = 1e-4) — Convergence tolerance
-* `print_iteration` (default = False) — Print intermediate iteration results
 
 **Python usage example:**
 
 ```python
-from grid_feedback_optimizer.main import main
+from grid_feedback_optimizer.models.loader import load_network
+from grid_feedback_optimizer.engine.solve import solve
+from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
 
-output_data, optimized_gen = main(
-    json_path="./examples/simple_example.json",
-    max_iter=200,
-    tol=1e-5,
-    print_iteration=True
-)
+# Load network from example JSON
+network = load_network("../examples/simple_example_with_transformer.json")
+
+# Initialize and check power flow
+power_flow_solver = PowerFlowSolver(network)
+
+# Run optimization using the Gradient Projection (GP) algorithm
+res_gp = solve(network, algorithm="gp")
+
+# Display and store results
+res_gp.print_summary()
+res_gp.plot_iterations()
+res_gp.save("gp_result.json")
+
 ```
 
-
-## Testing
-
-Run tests with:
-
-```bash
-pytest tests/
-```
 
 ## License
 
@@ -90,4 +87,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Author
 
-Developed and maintained by **Sen Zhan**.
+Developed and maintained by **Sen Zhan**  
+📧 Email: [sen.zhan@outlook.com](mailto:sen.zhan@outlook.com)
