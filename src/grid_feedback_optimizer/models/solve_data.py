@@ -3,6 +3,8 @@ from typing import List, Dict, Any
 from datetime import datetime
 import numpy as np
 import json
+import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from power_grid_model import ComponentType
 
