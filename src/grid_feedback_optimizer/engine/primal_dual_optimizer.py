@@ -122,7 +122,13 @@ class PrimalDualOptimizer:
             elif self.p_max[i] == 0.0: # flex load
                 p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i], self.s_inv[i], -p_target[i], q_target[i])
                 p_gen_opt[i] *= -1.0
-            else:
+            elif self.p_min[i] < 0 and self.p_max[i] > 0: # flex gen/load
+                if p_target[i] >= 0:
+                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(self.p_max[i], self.s_inv[i], p_target[i], q_target[i])
+                else:
+                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i], self.s_inv[i], -p_target[i], q_target[i])
+                    p_gen_opt[i] *= -1.0
+            else: # no easy analytic solution
                 p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.opt_projection(self.p_max[i], self.p_min[i], self.s_inv[i], p_target[i], q_target[i])
         
         return self.param_scale * np.column_stack((p_gen_opt, q_gen_opt))
