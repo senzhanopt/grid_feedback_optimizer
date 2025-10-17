@@ -27,6 +27,7 @@ dependencies = [
     "scipy>=1.16.2,<2.0",
     "matplotlib>=3.10.6,<4.0",
     "power-grid-model>=1.12.41,<2.0",
+    "openpyxl>=3.1.5,<4.0",
     "osqp>=1.0.4,<2.0",
     "pydantic>=2.11.9,<3.0",
     "pydantic_core>=2.33.2,<3.0",
