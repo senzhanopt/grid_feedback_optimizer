@@ -6,13 +6,13 @@
 ## Overview
 
 **Grid Feedback Optimizer** is a Python package that uses **feedback optimization** to optimize generator and device setpoints in electrical distribution grids.
-It reads a **JSON network description** and iteratively computes optimal setpoints.
+It reads a **JSON/EXCEL network description** and iteratively computes optimal setpoints.
 
 This package is designed for experimenting with **voltage regulation** and **congestion management**, providing a flexible framework for feedback-based grid optimization.
 
 ## Features
 
-* Load and simulate networks from JSON files.
+* Load and simulate networks from JSON/EXCEL files.
 * Iterative feedback optimization using:
     - **gradient projection (GP)** algorithm,
     - **primal-dual (PD)** algorithm.
@@ -29,7 +29,7 @@ src/
         engine/       # Power flow / optimization logic
         utils/        # Helper functions
         main.py
-examples/           # Example JSON network files
+examples/           # Example JSON/EXCEL network files
 tests/              # Tests
 requirements.txt    # Python dependencies
 README.md
