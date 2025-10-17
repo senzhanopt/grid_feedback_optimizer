@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=65.5.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "grid_feedback_optimizer"
 version = "0.1.0"
