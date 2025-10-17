@@ -49,7 +49,7 @@ dev = [
 ]
 
 # Windows-specific dependencies
-windows = ["pywin32>=311,<312"]
+windows = ["pywin32>=311"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
