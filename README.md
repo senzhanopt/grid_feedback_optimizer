@@ -37,22 +37,12 @@ README.md
 
 ## ⚙️ Installation
 
-**Clone the repository:**
+**Install from PyPI**
 
 ```bash
-git clone https://github.com/senzhanopt/grid_feedback_optimizer.git
-cd grid_feedback_optimizer
+pip install grid-feedback-optimizer
 ```
 
-**Install dependencies for all parts:**
-```bash
-pip install -r requirements.txt
-```
-
-**Install the project in editable mode**
-```bash
-pip install -e .
-```
 
 ## Usage
 
