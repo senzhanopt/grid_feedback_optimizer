@@ -11,7 +11,7 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
           delta_p: float = 1.0, delta_q: float = 1.0, algorithm: str = "gp", 
           alpha: float = 0.5, alpha_v: float = 10.0, 
           alpha_l: float = 10.0, alpha_t: float = 10.0, record_iterates: bool = True,
-          solver: str = "CLARABLE"):
+          solver: str = "CLARABEL"):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
