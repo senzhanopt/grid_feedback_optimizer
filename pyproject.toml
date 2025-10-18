@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "grid_feedback_optimizer"
-version = "0.1.3"
+version = "0.1.4"
 description = "Optimization methods for voltage and congestion management in modern power distribution grids."
 readme = "README.md"
 authors = [
