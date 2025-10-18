@@ -182,7 +182,7 @@ class PowerFlowSolver:
 
         return output_data
     
-    def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0):
+    def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0, loading_meas_side: str = "from"):
         """
         Compute sensitivities of bus voltages and line/transformer power flows to small perturbations
         in generator power injections (p and q) around the default operating point.
@@ -193,6 +193,8 @@ class PowerFlowSolver:
             Active power perturbation (W).
         delta_q : float
             Reactive power perturbation (VAr).
+        loading_meas_side: str
+            From which side branches are monitored: "from" or "to".
 
         Returns
         -------
@@ -212,11 +214,11 @@ class PowerFlowSolver:
         """
         # Base operating point
         u_pu_base = np.array(self.base_output_data[ComponentType.node]["u_pu"])
-        P_line_base = np.array(self.base_output_data[ComponentType.line]["p_from"])
-        Q_line_base = np.array(self.base_output_data[ComponentType.line]["q_from"])
+        P_line_base = np.array(self.base_output_data[ComponentType.line]["p_"+loading_meas_side])
+        Q_line_base = np.array(self.base_output_data[ComponentType.line]["q_"+loading_meas_side])
         if self.n_transformer >= 1:
-            P_transformer_base = np.array(self.base_output_data[ComponentType.transformer]["p_from"])
-            Q_transformer_base = np.array(self.base_output_data[ComponentType.transformer]["q_from"])
+            P_transformer_base = np.array(self.base_output_data[ComponentType.transformer]["p_"+loading_meas_side])
+            Q_transformer_base = np.array(self.base_output_data[ComponentType.transformer]["q_"+loading_meas_side])
         gen_base = np.column_stack((self.base_p_gen, self.base_q_gen))
 
         # Allocate arrays
@@ -238,11 +240,11 @@ class PowerFlowSolver:
             gen_base[g, 0] += delta_p
             output_p = self.run(gen_update=gen_base)
             u_pu_p = np.array(output_p[ComponentType.node]["u_pu"])
-            P_line_p = np.array(output_p[ComponentType.line]["p_from"])
-            Q_line_p = np.array(output_p[ComponentType.line]["q_from"])
+            P_line_p = np.array(output_p[ComponentType.line]["p_"+loading_meas_side])
+            Q_line_p = np.array(output_p[ComponentType.line]["q_"+loading_meas_side])
             if self.n_transformer >= 1:
-                P_transformer_p = np.array(output_p[ComponentType.transformer]["p_from"])
-                Q_transformer_p = np.array(output_p[ComponentType.transformer]["q_from"])
+                P_transformer_p = np.array(output_p[ComponentType.transformer]["p_"+loading_meas_side])
+                Q_transformer_p = np.array(output_p[ComponentType.transformer]["q_"+loading_meas_side])
 
             du_dp[:, g] = (u_pu_p - u_pu_base) / delta_p
             dP_line_dp[:, g] = (P_line_p - P_line_base) / delta_p
@@ -258,11 +260,11 @@ class PowerFlowSolver:
             gen_base[g, 1] += delta_q
             output_q = self.run(gen_update=gen_base)
             u_pu_q = np.array(output_q[ComponentType.node]["u_pu"])
-            P_line_q = np.array(output_q[ComponentType.line]["p_from"])
-            Q_line_q = np.array(output_q[ComponentType.line]["q_from"])
+            P_line_q = np.array(output_q[ComponentType.line]["p_"+loading_meas_side])
+            Q_line_q = np.array(output_q[ComponentType.line]["q_"+loading_meas_side])
             if self.n_transformer >= 1:
-                P_transformer_q = np.array(output_q[ComponentType.transformer]["p_from"])
-                Q_transformer_q = np.array(output_q[ComponentType.transformer]["q_from"])
+                P_transformer_q = np.array(output_q[ComponentType.transformer]["p_"+loading_meas_side])
+                Q_transformer_q = np.array(output_q[ComponentType.transformer]["q_"+loading_meas_side])
 
             du_dq[:, g] = (u_pu_q - u_pu_base) / delta_q
             dP_line_dq[:, g] = (P_line_q - P_line_base) / delta_q

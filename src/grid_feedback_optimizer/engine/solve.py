@@ -11,7 +11,7 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
           delta_p: float = 1.0, delta_q: float = 1.0, algorithm: str = "gp", 
           alpha: float = 0.5, alpha_v: float = 10.0, 
           alpha_l: float = 10.0, alpha_t: float = 10.0, record_iterates: bool = True,
-          solver: str = "CLARABEL"):
+          solver: str = "CLARABEL", loading_meas_side: str = "from"):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
@@ -19,7 +19,7 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
     # Initialize solver and optimizer
     n_transformer = len(network.transformers)
     power_flow_solver = PowerFlowSolver(network)
-    sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q)
+    sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q, loading_meas_side = loading_meas_side)
 
     if algorithm == "gp":
         optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha, solver = solver)
@@ -44,11 +44,11 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
     for k in range(1,max_iter+1):
         # 1. Get current network state
         u_pu_meas = np.array(output_data[ComponentType.node]["u_pu"])
-        P_line_meas = np.array(output_data[ComponentType.line]["p_from"])
-        Q_line_meas = np.array(output_data[ComponentType.line]["q_from"])
+        P_line_meas = np.array(output_data[ComponentType.line]["p_"+loading_meas_side])
+        Q_line_meas = np.array(output_data[ComponentType.line]["q_"+loading_meas_side])
         if n_transformer >= 1:
-            P_transformer_meas = np.array(output_data[ComponentType.transformer]["p_from"])
-            Q_transformer_meas = np.array(output_data[ComponentType.transformer]["q_from"])
+            P_transformer_meas = np.array(output_data[ComponentType.transformer]["p_"+loading_meas_side])
+            Q_transformer_meas = np.array(output_data[ComponentType.transformer]["q_"+loading_meas_side])
         # 2. Run optimization step → propose new setpoints
         param_dict = {
             "u_pu_meas": u_pu_meas,
