@@ -116,6 +116,65 @@ where `p` and `q` are the actual active and reactive power outputs.
 - `index`, `bus`: identifiers  
 - `p_norm`, `q_norm`: active and reactive power
 
+
+### 🧩 `solve()` Function Parameters
+
+The `solve()` function performs the iterative feedback optimization between power flow calculation and control updates.  
+It supports both **Gradient Projection (GP)** and **Primal-Dual (PD)** algorithms.
+
+```python
+solve(
+    network: Network,
+    max_iter: int = 1000,
+    tol: float = 1e-3,
+    delta_p: float = 1.0,
+    delta_q: float = 1.0,
+    algorithm: str = "gp",
+    alpha: float = 0.5,
+    alpha_v: float = 10.0,
+    alpha_l: float = 10.0,
+    alpha_t: float = 10.0,
+    record_iterates: bool = True,
+    solver: str = "CLARABEL",
+    loading_meas_side: str = "from"
+)
+```
+
+#### **Parameters**
+
+| Parameter | Type | Default | Description |
+|------------|------|----------|--------------|
+| **`network`** | `Network` | — | Grid model object containing nodes, lines, transformers, loads, and generators (loaded via `load_network` or `load_network_from_excel`). |
+| **`max_iter`** | `int` | `1000` | Maximum number of optimization–power flow iterations. |
+| **`tol`** | `float` | `1e-3` | Convergence tolerance for generator setpoint changes between iterations. |
+| **`delta_p`** | `float` | `1.0` | Small perturbation (in W) used for computing **active power sensitivities**. |
+| **`delta_q`** | `float` | `1.0` | Small perturbation (in VAR) used for computing **reactive power sensitivities**. |
+| **`algorithm`** | `str` | `"gp"` | Optimization algorithm to use: <br>• `"gp"` → Gradient Projection <br>• `"pd"` → Primal-Dual |
+| **`alpha`** | `float` | `0.5` | Step size (learning rate) for generator setpoint updates (used in both GP and PD). |
+| **`alpha_v`** | `float` | `10.0` | Voltage-related dual variable step size (only used in PD algorithm). |
+| **`alpha_l`** | `float` | `10.0` | Line-loading-related dual variable step size (only used in PD algorithm). |
+| **`alpha_t`** | `float` | `10.0` | Transformer-loading-related dual variable step size (only used in PD algorithm). |
+| **`record_iterates`** | `bool` | `True` | If `True`, stores all intermediate iteration data (useful for analysis and plotting). |
+| **`solver`** | `str` | `"CLARABEL"` | Convex optimization solver backend for subproblems (e.g., `"CLARABEL"`, `"OSQP"`, `"SCS"`). |
+| **`loading_meas_side`** | `str` | `"from"` | Defines which end of the line or transformer is used for measuring loading: `"from"` or `"to"`. |
+
+#### **Returns**
+
+| Output | Type | Description |
+|---------|------|-------------|
+| **`SolveResults`** | `dataclass` | Object containing: <br>• `final_output` — final power flow results <br>• `final_gen_update` — optimized generator setpoints <br>• `iterations` — list of all recorded iteration states (if `record_iterates=True`) |
+
+---
+
+🌀 **Conceptual workflow:**
+
+1. **Power flow calculation** → compute voltages, line, and transformer loadings.  
+2. **Optimization step** → update generator active/reactive power setpoints using feedback and sensitivities.  
+3. **Iterate** until generator updates converge within `tol`.
+
+The process continues until steady-state optimal operation is achieved under the given constraints.
+
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
