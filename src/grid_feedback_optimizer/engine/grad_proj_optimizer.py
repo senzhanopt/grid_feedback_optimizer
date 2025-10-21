@@ -2,6 +2,7 @@ import cvxpy as cp
 import numpy as np
 import math
 from grid_feedback_optimizer.models.network import Network
+from grid_feedback_optimizer.models.solve_data import OptimizationInputs
 
 class GradientProjectionOptimizer:
     """
@@ -96,22 +97,33 @@ class GradientProjectionOptimizer:
 
         return prob
 
-    def solve_problem(self, param_dict: dict):
+    def solve_problem(self, opt_input: OptimizationInputs):
         """
-        Update parameters and solve the cached optimization problem.
+        Update CVXPY parameters using structured optimization inputs,
+        solve the cached optimization problem, and return optimized setpoints.
 
         Parameters
         ----------
-        param_dict : dict
-            Must contain keys: "u_pu_meas", "P_line_meas", "Q_line_meas",
-            "p_gen_last", "q_gen_last"
-        
+        opt_input : OptimizationInputs
+            Structured input model containing:
+                - u_pu_meas : np.ndarray
+                    Measured node voltages [p.u.]
+                - P_line_meas, Q_line_meas : np.ndarray
+                    Measured active/reactive line power flows
+                - p_gen_last, q_gen_last : np.ndarray
+                    Previous generator active/reactive power setpoints
+                - P_transformer_meas, Q_transformer_meas : np.ndarray, optional
+                    Measured transformer active/reactive power (if applicable)
+
         Returns
         -------
-        p_gen_opt, q_gen_opt : np.ndarray
-            Optimized active and reactive power setpoints for generators
+        np.ndarray
+            Optimized generator setpoints of shape (n_generators, 2),
+            where each row contains [p_opt, q_opt].
         """
+
         # Update CVXPY parameter values
+        param_dict = opt_input.to_dict()
         self.u_pu_meas.value = param_dict["u_pu_meas"]
         self.P_line_meas.value = param_dict["P_line_meas"]
         self.Q_line_meas.value = param_dict["Q_line_meas"]

@@ -4,6 +4,7 @@ from grid_feedback_optimizer.models.loader import load_network, load_network_fro
 from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
 from grid_feedback_optimizer.engine.grad_proj_optimizer import GradientProjectionOptimizer
 from grid_feedback_optimizer.engine.primal_dual_optimizer import PrimalDualOptimizer
+from grid_feedback_optimizer.models.solve_data import OptimizationInputs
 
 def test_optimization_from_example():
 
@@ -24,7 +25,9 @@ def test_optimization_from_example():
         "q_gen_last": np.array([0.0]),
     }
 
-    optimizer.solve_problem(param_dict)
+    opt_input = OptimizationInputs(**param_dict)
+
+    optimizer.solve_problem(opt_input)
 
 def test_optimization_from_example_with_transformer():
 
@@ -47,7 +50,9 @@ def test_optimization_from_example_with_transformer():
         "q_gen_last": np.array([0.0]),
     }
 
-    optimizer.solve_problem(param_dict)
+    opt_input = OptimizationInputs(**param_dict)
+
+    optimizer.solve_problem(opt_input)
 
 def test_optimization_from_example_with_transformer_from_excel():
 
@@ -70,7 +75,9 @@ def test_optimization_from_example_with_transformer_from_excel():
         "q_gen_last": np.array([0.0]),
     }
 
-    optimizer.solve_problem(param_dict)
+    opt_input = OptimizationInputs(**param_dict)
+
+    optimizer.solve_problem(opt_input)
 
 def test_pd_optimization_from_example_with_transformer():
 
@@ -93,4 +100,6 @@ def test_pd_optimization_from_example_with_transformer():
         "q_gen_last": np.array([0.0]),
     }
 
-    optimizer.solve_problem(param_dict)
+    opt_input = OptimizationInputs(**param_dict)
+
+    optimizer.solve_problem(opt_input)

@@ -5,7 +5,7 @@ from grid_feedback_optimizer.engine.grad_proj_optimizer import GradientProjectio
 from grid_feedback_optimizer.engine.primal_dual_optimizer import PrimalDualOptimizer
 import copy
 from power_grid_model import ComponentType
-from grid_feedback_optimizer.models.solve_data import SolveResults
+from grid_feedback_optimizer.models.solve_data import SolveResults, OptimizationInputs
 
 def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
           delta_p: float = 1.0, delta_q: float = 1.0, algorithm: str = "gp", 
@@ -54,14 +54,19 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
             "u_pu_meas": u_pu_meas,
             "P_line_meas": P_line_meas,
             "Q_line_meas": Q_line_meas,
-            "p_gen_last": gen_update[:,0],
-            "q_gen_last": gen_update[:,1],
+            "p_gen_last": gen_update[:, 0],
+            "q_gen_last": gen_update[:, 1],
         }
-        if n_transformer >= 1:
-            param_dict["P_transformer_meas"] = P_transformer_meas
-            param_dict["Q_transformer_meas"] = Q_transformer_meas
 
-        gen_update = optimizer.solve_problem(param_dict)
+        if n_transformer >= 1:
+            param_dict.update({
+                "P_transformer_meas": P_transformer_meas,
+                "Q_transformer_meas": Q_transformer_meas
+            })
+
+        opt_input = OptimizationInputs(**param_dict)
+
+        gen_update = optimizer.solve_problem(opt_input)
 
         # 3. Run power flow with updated setpoints
         output_data = power_flow_solver.run(gen_update=gen_update)
