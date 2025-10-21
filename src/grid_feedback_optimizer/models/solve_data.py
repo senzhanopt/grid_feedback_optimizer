@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import numpy as np
 import json
@@ -149,3 +149,23 @@ class SolveResults(BaseModel):
 
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
+
+class OptimizationInputs(BaseModel):
+    """
+    Structured container for optimization inputs at each iteration.
+    """
+    u_pu_meas: np.ndarray
+    P_line_meas: np.ndarray
+    Q_line_meas: np.ndarray
+    p_gen_last: np.ndarray
+    q_gen_last: np.ndarray
+    P_transformer_meas: Optional[np.ndarray] = None
+    Q_transformer_meas: Optional[np.ndarray] = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    def to_dict(self):
+        """Convert to a plain dict (for compatibility with existing code)."""
+        data = self.model_dump()
+        # Remove None entries (if transformers don’t exist)
+        return {k: v for k, v in data.items() if v is not None}

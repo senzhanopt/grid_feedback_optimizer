@@ -1,5 +1,6 @@
 from grid_feedback_optimizer.models.network import Network
 from grid_feedback_optimizer.engine.renew_gen_projection import RenewGenProjection
+from grid_feedback_optimizer.models.solve_data import OptimizationInputs
 import numpy as np
 import math
 
@@ -65,23 +66,32 @@ class PrimalDualOptimizer:
         return q / np.sqrt(p**2 + q**2)
 
 
-    def solve_problem(self, param_dict: dict):
+    def solve_problem(self, opt_input: OptimizationInputs):
         """
         Update parameters and implement primal-dual gradient projection.
 
         Parameters
         ----------
-        param_dict : dict
-            Must contain keys: "u_pu_meas", "P_line_meas", "Q_line_meas",
-            "p_gen_last", "q_gen_last"
-        
+        opt_input : OptimizationInputs
+            Structured input model containing:
+                - u_pu_meas : np.ndarray
+                    Measured node voltages [p.u.]
+                - P_line_meas, Q_line_meas : np.ndarray
+                    Measured active/reactive line power flows
+                - p_gen_last, q_gen_last : np.ndarray
+                    Previous generator active/reactive power setpoints
+                - P_transformer_meas, Q_transformer_meas : np.ndarray, optional
+                    Measured transformer active/reactive power (if applicable)
+
         Returns
         -------
-        p_gen_opt, q_gen_opt : np.ndarray
-            Optimized active and reactive power setpoints for generators
+        np.ndarray
+            Optimized generator setpoints of shape (n_generators, 2),
+            where each row contains [p_opt, q_opt].
         """
 
         # update dual variables
+        param_dict = opt_input.to_dict()
         self.dual_v_upp += self.alpha_v * (param_dict["u_pu_meas"] - self.u_pu_max)
         self.dual_v_upp[self.dual_v_upp < 0] = 0.0
         self.dual_v_low += self.alpha_v * (self.u_pu_min - param_dict["u_pu_meas"])
