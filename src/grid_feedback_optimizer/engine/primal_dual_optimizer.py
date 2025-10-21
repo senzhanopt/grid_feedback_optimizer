@@ -3,6 +3,7 @@ from grid_feedback_optimizer.engine.renew_gen_projection import RenewGenProjecti
 from grid_feedback_optimizer.models.solve_data import OptimizationInputs
 import numpy as np
 import math
+from collections.abc import Callable
 
 class PrimalDualOptimizer:
     """
@@ -66,7 +67,7 @@ class PrimalDualOptimizer:
         return q / np.sqrt(p**2 + q**2)
 
 
-    def solve_problem(self, opt_input: OptimizationInputs, grad_callback: callable | None = None, **callback_kwargs):
+    def solve_problem(self, opt_input: OptimizationInputs, grad_callback: Callable | None = None, **callback_kwargs):
         """
         Update parameters and implement primal-dual gradient projection.
 
