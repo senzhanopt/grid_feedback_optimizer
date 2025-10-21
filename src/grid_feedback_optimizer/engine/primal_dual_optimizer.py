@@ -66,7 +66,7 @@ class PrimalDualOptimizer:
         return q / np.sqrt(p**2 + q**2)
 
 
-    def solve_problem(self, opt_input: OptimizationInputs):
+    def solve_problem(self, opt_input: OptimizationInputs, grad_callback: callable | None = None, **callback_kwargs):
         """
         Update parameters and implement primal-dual gradient projection.
 
@@ -82,6 +82,8 @@ class PrimalDualOptimizer:
                     Previous generator active/reactive power setpoints
                 - P_transformer_meas, Q_transformer_meas : np.ndarray, optional
                     Measured transformer active/reactive power (if applicable)
+        grad_callback: callable | None = None
+            A function which takes grad_p and grad_q and outputs grad_p and grad_q
 
         Returns
         -------
@@ -118,6 +120,10 @@ class PrimalDualOptimizer:
         if self.n_transformer >= 1:
             grad_q += self.sensitivities["dP_transformer_dq"].T @ (self.dual_transformer * self.calc_pf(param_dict["P_transformer_meas"],param_dict["Q_transformer_meas"]) / self.s_transformer)*self.param_scale
             grad_q += self.sensitivities["dQ_transformer_dq"].T @ (self.dual_transformer * self.calc_rpf(param_dict["P_transformer_meas"],param_dict["Q_transformer_meas"]) / self.s_transformer)*self.param_scale
+
+        # apply callback function, e.g. when including an extra gradient term from transformer-level setpoint tracking
+        if grad_callback is not None:
+            grad_p, grad_q = grad_callback(grad_p, grad_q, **callback_kwargs)
 
         # gradient descent
         p_target = param_dict["p_gen_last"]/self.param_scale - self.alpha * grad_p
