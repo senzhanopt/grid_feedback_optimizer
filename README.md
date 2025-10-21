@@ -174,6 +174,12 @@ solve(
 
 The process continues until steady-state optimal operation is achieved under the given constraints.
 
+# References
+
+- **Gradient Projection** – V. Haberle, A. Hauswirth, L. Ortmann, S. Bolognani, and F. Dorfler, “Non-Convex Feedback Optimization with Input and Output Constraints,” *IEEE Control Systems Letters*, vol. 5, no. 1, pp. 343–348, 2021. [DOI: 10.1109/LCSYS.2020.3002152](https://doi.org/10.1109/LCSYS.2020.3002152)  
+- **Primal-Dual** – E. Dall’Anese and A. Simonetto, “Optimal Power Flow Pursuit,” *IEEE Transactions on Smart Grid*, vol. 9, no. 2, 2018. [DOI: 10.1109/TSG.2016.2571982](https://doi.org/10.1109/TSG.2016.2571982)
+
+
 
 ## License
 
