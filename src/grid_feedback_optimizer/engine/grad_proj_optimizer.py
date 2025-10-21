@@ -14,7 +14,7 @@ class GradientProjectionOptimizer:
         """
         Initialize optimizer and build cached problem.
         """
-        self.prob = self._build_problem(network, sensitivities, alpha)
+        self.prob, self.cons, self.obj = self._build_problem(network, sensitivities, alpha)
         self.solver = solver
 
 
@@ -87,15 +87,15 @@ class GradientProjectionOptimizer:
         grad_q = 2.0 * cp.multiply(np.array([gen.c2_q for gen in network.renew_gens]), (self.q_gen_last - np.array([gen.q_norm for gen in network.renew_gens])))
         grad_q += np.array([gen.c1_q for gen in network.renew_gens])
 
-        objective = cp.Minimize(
+        obj = cp.Minimize(
             cp.sum_squares(self.p_gen - (self.p_gen_last - alpha * grad_p) / self.param_scale) +
             cp.sum_squares(self.q_gen - (self.q_gen_last - alpha * grad_q) / self.param_scale)
         )
 
         # construct problem
-        prob = cp.Problem(objective, cons)
+        prob = cp.Problem(obj, cons)
 
-        return prob
+        return prob, cons, obj
 
     def solve_problem(self, opt_input: OptimizationInputs):
         """
