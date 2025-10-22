@@ -11,7 +11,7 @@ class PrimalDualOptimizer:
     """
     def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5,
                  alpha_v: float = 10.0, alpha_l: float = 10.0, alpha_t: float = 10.0,
-                 solver: str = "CLARABLE"):
+                 solver: str = "CLARABEL"):
         """
         Initialize optimizer and build cached problem.
         """
