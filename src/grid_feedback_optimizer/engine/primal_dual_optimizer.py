@@ -40,11 +40,11 @@ class PrimalDualOptimizer:
         self.c1_p = np.array([gen.c1_p for gen in network.renew_gens])
         self.c2_q = np.array([gen.c2_q for gen in network.renew_gens])
         self.c1_q = np.array([gen.c1_q for gen in network.renew_gens])
-        self.p_norm = np.array([gen.p_norm for gen in network.renew_gens])/self.param_scale
-        self.q_norm = np.array([gen.q_norm for gen in network.renew_gens])/self.param_scale
-        self.p_min = np.array([gen.p_min for gen in network.renew_gens])/self.param_scale
-        self.p_max = np.array([gen.p_max for gen in network.renew_gens])/self.param_scale
-        self.s_inv = np.array([gen.s_inv for gen in network.renew_gens])/self.param_scale
+        self.p_norm = np.array([gen.p_norm for gen in network.renew_gens])
+        self.q_norm = np.array([gen.q_norm for gen in network.renew_gens])
+        self.p_min = np.array([gen.p_min for gen in network.renew_gens])
+        self.p_max = np.array([gen.p_max for gen in network.renew_gens])
+        self.s_inv = np.array([gen.s_inv for gen in network.renew_gens])
         
         # initialize dual variables
         self.dual_v_upp = np.zeros(self.n_bus)        
@@ -106,7 +106,7 @@ class PrimalDualOptimizer:
             self.dual_transformer[self.dual_transformer < 0] = 0.0
 
         # update primal variables
-        grad_p = 2.0 * self.c2_p * (param_dict["p_gen_last"]/self.param_scale - self.p_norm) + self.c1_p
+        grad_p = 2.0 * self.c2_p * (param_dict["p_gen_last"]/self.param_scale - self.p_norm/self.param_scale) + self.c1_p
         grad_p += self.sensitivities["du_dp"].T @ (self.dual_v_upp - self.dual_v_low)*self.param_scale
         grad_p += self.sensitivities["dP_line_dp"].T @ (self.dual_line * self.calc_pf(param_dict["P_line_meas"],param_dict["Q_line_meas"]) / self.s_line)*self.param_scale
         grad_p += self.sensitivities["dQ_line_dp"].T @ (self.dual_line * self.calc_rpf(param_dict["P_line_meas"],param_dict["Q_line_meas"]) / self.s_line)*self.param_scale
@@ -114,7 +114,7 @@ class PrimalDualOptimizer:
             grad_p += self.sensitivities["dP_transformer_dp"].T @ (self.dual_transformer * self.calc_pf(param_dict["P_transformer_meas"],param_dict["Q_transformer_meas"]) / self.s_transformer)*self.param_scale
             grad_p += self.sensitivities["dQ_transformer_dp"].T @ (self.dual_transformer * self.calc_rpf(param_dict["P_transformer_meas"],param_dict["Q_transformer_meas"]) / self.s_transformer)*self.param_scale
 
-        grad_q = 2.0 * self.c2_q * (param_dict["q_gen_last"]/self.param_scale - self.q_norm) + self.c1_q
+        grad_q = 2.0 * self.c2_q * (param_dict["q_gen_last"]/self.param_scale - self.q_norm/self.param_scale) + self.c1_q
         grad_q += self.sensitivities["du_dq"].T @ (self.dual_v_upp - self.dual_v_low)*self.param_scale
         grad_q += self.sensitivities["dP_line_dq"].T @ (self.dual_line * self.calc_pf(param_dict["P_line_meas"],param_dict["Q_line_meas"]) / self.s_line)*self.param_scale
         grad_q += self.sensitivities["dQ_line_dq"].T @ (self.dual_line * self.calc_rpf(param_dict["P_line_meas"],param_dict["Q_line_meas"]) / self.s_line)*self.param_scale
@@ -135,17 +135,17 @@ class PrimalDualOptimizer:
         q_gen_opt = np.zeros(self.n_gen)
         for i in range(self.n_gen):
             if self.p_min[i] == 0.0: # generator
-                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(self.p_max[i], self.s_inv[i], p_target[i], q_target[i])
+                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(self.p_max[i]/self.param_scale, self.s_inv[i]/self.param_scale, p_target[i], q_target[i])
             elif self.p_max[i] == 0.0: # flex load
-                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i], self.s_inv[i], -p_target[i], q_target[i])
+                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i]/self.param_scale, self.s_inv[i]/self.param_scale, -p_target[i], q_target[i])
                 p_gen_opt[i] *= -1.0
             elif self.p_min[i] < 0 and self.p_max[i] > 0: # flex gen/load
                 if p_target[i] >= 0:
-                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(self.p_max[i], self.s_inv[i], p_target[i], q_target[i])
+                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(self.p_max[i]/self.param_scale, self.s_inv[i]/self.param_scale, p_target[i], q_target[i])
                 else:
-                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i], self.s_inv[i], -p_target[i], q_target[i])
+                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i]/self.param_scale, self.s_inv[i]/self.param_scale, -p_target[i], q_target[i])
                     p_gen_opt[i] *= -1.0
             else: # no easy analytic solution
-                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.opt_projection(self.p_max[i], self.p_min[i], self.s_inv[i], p_target[i], q_target[i])
+                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.opt_projection(self.p_max[i]/self.param_scale, self.p_min[i]/self.param_scale, self.s_inv[i]/self.param_scale, p_target[i], q_target[i])
         
         return self.param_scale * np.column_stack((p_gen_opt, q_gen_opt))
