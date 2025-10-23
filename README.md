@@ -136,7 +136,10 @@ solve(
     alpha_t: float = 10.0,
     record_iterates: bool = True,
     solver: str = "CLARABEL",
-    loading_meas_side: str = "from"
+    loading_meas_side: str = "from",
+    rel_tol: float = 1E-4,
+    rel_tol_line: float = 1E-2,
+    **solver_kwargs
 )
 ```
 
@@ -157,6 +160,9 @@ solve(
 | **`record_iterates`** | `bool` | `True` | If `True`, stores all intermediate iteration data (useful for analysis and plotting). |
 | **`solver`** | `str` | `"CLARABEL"` | Convex optimization solver backend for subproblems (e.g., `"CLARABEL"`, `"OSQP"`, `"SCS"`). |
 | **`loading_meas_side`** | `str` | `"from"` | Defines which end of the line or transformer is used for measuring loading: `"from"` or `"to"`. |
+| **`rel_tol`** | `float` | `"1E-4"` | Relative tolerance for sensitivity matrices other than `dP_line_dq` or `dQ_line_dp`. |
+| **`rel_tol_line`** | `float` | `"1E-2"` | Relative tolerance for sensitivity matrices `dP_line_dq` and `dQ_line_dp`. |
+| **`**kwargs`** | - | - | Optional solver parameters (e.g., `"verbose"`, `"BarHomogeneous"`). |
 
 #### **Returns**
 

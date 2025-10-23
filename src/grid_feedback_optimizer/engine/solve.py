@@ -12,7 +12,7 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
           alpha: float = 0.5, alpha_v: float = 10.0, 
           alpha_l: float = 10.0, alpha_t: float = 10.0, record_iterates: bool = True,
           solver: str = "CLARABEL", loading_meas_side: str = "from",
-          rel_tol = 1E-4, rel_tol_line = 1E-2, **solver_kwargs):
+          rel_tol: float = 1E-4, rel_tol_line: float = 1E-2, **solver_kwargs):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.

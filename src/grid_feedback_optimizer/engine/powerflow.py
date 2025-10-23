@@ -199,7 +199,7 @@ class PowerFlowSolver:
         return output_data
     
     def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0, loading_meas_side: str = "from",
-                           rel_tol = 1E-4, rel_tol_line = 1E-2):
+                           rel_tol: float = 1E-4, rel_tol_line: float = 1E-2):
         """
         Compute sensitivities of bus voltages and line/transformer power flows to small perturbations
         in generator power injections (p and q) around the default operating point.
