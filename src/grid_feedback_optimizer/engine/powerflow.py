@@ -22,6 +22,15 @@ class PowerFlowSolver:
     def __init__(self, network: Network):
         self.build_network(network)
 
+    @staticmethod
+    def prune_relative(A: np.ndarray, rel_tol: float = 1e-4):
+        """Zero very small elements relative to the matrix scale."""
+        A = A.copy()
+        max_abs = np.max(np.abs(A))
+        A[np.abs(A) < rel_tol * max_abs] = 0.0
+        return A
+
+
     def build_network(self, network: Network):
         id_count = 0
         # node
@@ -134,6 +143,7 @@ class PowerFlowSolver:
         self.base_q_gen = sym_gen["q_specified"]
         self.u_pu_max = np.array([bus.u_pu_max for bus in network.buses])
         self.u_pu_min = np.array([bus.u_pu_min for bus in network.buses])
+        self.node_source = source["node"]
     
     @property
     def is_congested(self):
@@ -188,7 +198,8 @@ class PowerFlowSolver:
 
         return output_data
     
-    def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0, loading_meas_side: str = "from"):
+    def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0, loading_meas_side: str = "from",
+                           rel_tol = 1E-4, rel_tol_line = 1E-2):
         """
         Compute sensitivities of bus voltages and line/transformer power flows to small perturbations
         in generator power injections (p and q) around the default operating point.
@@ -281,6 +292,27 @@ class PowerFlowSolver:
             
             # recover to the base power
             gen_base[g, 1] -= delta_q
+
+        ## remove very small values in sensitivities to avoid numerical issues in optimization
+
+        # change slack bus voltage sensitivity to 0.0
+        du_dp[self.node_source, :] = 0.0
+        du_dq[self.node_source, :] = 0.0
+
+        # Prune small elements in sensitivities using default rel_tol
+        du_dp = self.prune_relative(du_dp, rel_tol=rel_tol)
+        du_dq = self.prune_relative(du_dq, rel_tol=rel_tol)
+        dP_line_dp = self.prune_relative(dP_line_dp, rel_tol=rel_tol)
+        dQ_line_dp = self.prune_relative(dQ_line_dp, rel_tol=rel_tol_line)
+        dP_line_dq = self.prune_relative(dP_line_dq, rel_tol=rel_tol_line)
+        dQ_line_dq = self.prune_relative(dQ_line_dq, rel_tol=rel_tol)
+
+        if self.n_transformer >= 1:
+            dP_transformer_dp = self.prune_relative(dP_transformer_dp, rel_tol=rel_tol)
+            dQ_transformer_dp = self.prune_relative(dQ_transformer_dp, rel_tol=rel_tol)
+            dP_transformer_dq = self.prune_relative(dP_transformer_dq, rel_tol=rel_tol)
+            dQ_transformer_dq = self.prune_relative(dQ_transformer_dq, rel_tol=rel_tol)
+
 
         sensitivities = {
             "du_dp": du_dp,
