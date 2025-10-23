@@ -10,12 +10,13 @@ class GradientProjectionOptimizer:
     Caches the CVXPY problem to allow fast updates of parameters.
     """
 
-    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5, solver: str = "CLARABEL"):
+    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5, solver: str = "CLARABEL", **solver_kwargs):
         """
         Initialize optimizer and build cached problem.
         """
         self.prob, self.cons, self.obj = self._build_problem(network, sensitivities, alpha)
         self.solver = solver
+        self.solver_kwargs = solver_kwargs
 
 
     def _build_problem(self, network: Network, sensitivities: dict, alpha: float):
@@ -47,13 +48,24 @@ class GradientProjectionOptimizer:
         self.p_gen = cp.Variable(n_gen)
         self.q_gen = cp.Variable(n_gen)
 
+        # Parameters with given values
+        self.p_max = cp.Parameter(n_gen)
+        self.p_min = cp.Parameter(n_gen)
+        self.p_norm = cp.Parameter(n_gen)
+        self.q_norm = cp.Parameter(n_gen)
+
+        self.p_max.value = np.array([g.p_max for g in network.renew_gens])
+        self.p_min.value = np.array([g.p_min for g in network.renew_gens])
+        self.p_norm.value = np.array([g.p_norm for g in network.renew_gens])
+        self.q_norm.value = np.array([g.q_norm for g in network.renew_gens])
+
         # Constraints
         cons = []
         
         # renewable gens
         for i in range(n_gen):
-            cons += [self.p_gen[i] <= network.renew_gens[i].p_max / self.param_scale]
-            cons += [self.p_gen[i] >= network.renew_gens[i].p_min / self.param_scale]
+            cons += [self.p_gen[i] <= self.p_max[i] / self.param_scale]
+            cons += [self.p_gen[i] >= self.p_min[i] / self.param_scale]
             cons += [cp.SOC(1.0, cp.hstack([self.p_gen[i], self.q_gen[i]])/(network.renew_gens[i].s_inv / self.param_scale))]
         
         # voltage
@@ -82,9 +94,9 @@ class GradientProjectionOptimizer:
                 ])/s_transformer)]                 
         
         # Objective
-        grad_p = 2.0 * cp.multiply( np.array([gen.c2_p for gen in network.renew_gens]), (self.p_gen_last - np.array([gen.p_norm for gen in network.renew_gens])))
+        grad_p = 2.0 * cp.multiply( np.array([gen.c2_p for gen in network.renew_gens]), (self.p_gen_last - self.p_norm))
         grad_p += np.array([gen.c1_p for gen in network.renew_gens])
-        grad_q = 2.0 * cp.multiply(np.array([gen.c2_q for gen in network.renew_gens]), (self.q_gen_last - np.array([gen.q_norm for gen in network.renew_gens])))
+        grad_q = 2.0 * cp.multiply(np.array([gen.c2_q for gen in network.renew_gens]), (self.q_gen_last - self.q_norm))
         grad_q += np.array([gen.c1_q for gen in network.renew_gens])
 
         obj = cp.Minimize(
@@ -133,16 +145,19 @@ class GradientProjectionOptimizer:
             self.P_transformer_meas.value = param_dict["P_transformer_meas"]
             self.Q_transformer_meas.value = param_dict["Q_transformer_meas"]
         
-
         try:
-            self.prob.solve(solver = getattr(cp, self.solver))
-        except:
-            print(self.prob.status)
-            # If solver fails, return last known feasible values
-            print("Solver failed, returning previous generator setpoints.")
+            self.prob.solve(solver=getattr(cp, self.solver), **self.solver_kwargs)
+        except cp.error.SolverError as e:
+            print(f"Solver error: {e}")
+            print("Returning previous generator setpoints.")
             return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
+
+        # Check solver status
+        if self.prob.status == cp.OPTIMAL:
+            return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
         else:
-            if  self.prob.status == "optimal":
-                return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
-            else:            
-                return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
+            print(f"Solver finished with status: {self.prob.status}. Returning previous generator setpoints.")
+            return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))

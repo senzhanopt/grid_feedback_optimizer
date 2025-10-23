@@ -109,7 +109,7 @@ class SolveResults(BaseModel):
         gen_q = np.array([it["gen_update"][:, 1] for it in self.iterations])
 
         # === Plot ===
-        fig, axes = plt.subplots(5, 1, figsize=(10, 16), sharex=True)
+        fig, axes = plt.subplots(5, 1, figsize=(8, 8), sharex=True)
         fig.suptitle("Optimization Iteration Evolution", fontsize=16, weight='bold')
 
         # 1️⃣ Voltages
@@ -149,6 +149,7 @@ class SolveResults(BaseModel):
 
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
+        plt.close(fig)
 
 class OptimizationInputs(BaseModel):
     """

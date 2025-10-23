@@ -6,9 +6,10 @@ class RenewGenProjection:
     Project points onto the feasible inverter operating region.
     Supports analytical (with p_min = 0) and CVXPY-based (free p_min) projections.
     """   
-    def __init__(self, solver: str = "CLARABEL"):
+    def __init__(self, solver: str = "CLARABEL", **solver_kwargs):
         """Initialize the CVXPY problem for repeated projections."""
         self.solver = solver
+        self.solver_kwargs = solver_kwargs
         self._setup_qp()
 
     # ---------------- CVXPY Projection Setup ----------------
@@ -39,12 +40,21 @@ class RenewGenProjection:
         self.p.value = p
         self.q.value = q
 
-        self.cvxpy_problem.solve(getattr(cp, self.solver))
+        try:
+            # Solve the problem
+            self.cvxpy_problem.solve(solver=getattr(cp, self.solver), **self.solver_kwargs)
+        except cp.error.SolverError as e:
+            # Catch CVXPY solver-specific errors
+            raise ValueError(f"CVXPY solver error: {e}, status={self.cvxpy_problem.status}")
+        except Exception as e:
+            # Catch any other unexpected errors
+            raise ValueError(f"CVXPY projection failed due to unexpected error: {e}, status={self.cvxpy_problem.status}")
 
-        if self.cvxpy_problem.status not in ["optimal", "optimal_inaccurate"]:
-            raise ValueError(f"CVXPY projection failed: status={self.cvxpy_problem.status}")
-
-        return np.array([self.p_var.value, self.q_var.value])        
+        # Check solver status
+        if self.cvxpy_problem.status == cp.OPTIMAL:
+            return np.array([self.p_var.value, self.q_var.value])
+        else:
+            raise ValueError(f"CVXPY projection did not converge to optimal solution, status={self.cvxpy_problem.status}")
 
     @staticmethod
     def analytic_projection(p_max: float, s_inv: float, p: float, q: float):
