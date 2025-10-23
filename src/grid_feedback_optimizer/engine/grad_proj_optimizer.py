@@ -10,12 +10,13 @@ class GradientProjectionOptimizer:
     Caches the CVXPY problem to allow fast updates of parameters.
     """
 
-    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5, solver: str = "CLARABEL"):
+    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5, solver: str = "CLARABEL", **solver_kwargs):
         """
         Initialize optimizer and build cached problem.
         """
         self.prob, self.cons, self.obj = self._build_problem(network, sensitivities, alpha)
         self.solver = solver
+        self.solver_kwargs = solver_kwargs
 
 
     def _build_problem(self, network: Network, sensitivities: dict, alpha: float):
@@ -145,7 +146,7 @@ class GradientProjectionOptimizer:
             self.Q_transformer_meas.value = param_dict["Q_transformer_meas"]
         
         try:
-            self.prob.solve(solver=getattr(cp, self.solver))
+            self.prob.solve(solver=getattr(cp, self.solver), **self.solver_kwargs)
         except cp.error.SolverError as e:
             print(f"Solver error: {e}")
             print("Returning previous generator setpoints.")

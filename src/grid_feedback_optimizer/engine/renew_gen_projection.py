@@ -6,9 +6,10 @@ class RenewGenProjection:
     Project points onto the feasible inverter operating region.
     Supports analytical (with p_min = 0) and CVXPY-based (free p_min) projections.
     """   
-    def __init__(self, solver: str = "CLARABEL"):
+    def __init__(self, solver: str = "CLARABEL", **solver_kwargs):
         """Initialize the CVXPY problem for repeated projections."""
         self.solver = solver
+        self.solver_kwargs = solver_kwargs
         self._setup_qp()
 
     # ---------------- CVXPY Projection Setup ----------------
@@ -41,7 +42,7 @@ class RenewGenProjection:
 
         try:
             # Solve the problem
-            self.cvxpy_problem.solve(solver=getattr(cp, self.solver))
+            self.cvxpy_problem.solve(solver=getattr(cp, self.solver), **self.solver_kwargs)
         except cp.error.SolverError as e:
             # Catch CVXPY solver-specific errors
             raise ValueError(f"CVXPY solver error: {e}, status={self.cvxpy_problem.status}")
