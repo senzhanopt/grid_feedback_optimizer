@@ -11,7 +11,8 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
           delta_p: float = 1.0, delta_q: float = 1.0, algorithm: str = "gp", 
           alpha: float = 0.5, alpha_v: float = 10.0, 
           alpha_l: float = 10.0, alpha_t: float = 10.0, record_iterates: bool = True,
-          solver: str = "CLARABEL", loading_meas_side: str = "from"):
+          solver: str = "CLARABEL", loading_meas_side: str = "from",
+          rel_tol = 1E-4, rel_tol_line = 1E-2, **solver_kwargs):
     """
     Solve the grid optimization problem by iterating
     between power flow and optimization.
@@ -19,13 +20,14 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
     # Initialize solver and optimizer
     n_transformer = len(network.transformers)
     power_flow_solver = PowerFlowSolver(network)
-    sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q, loading_meas_side = loading_meas_side)
-
+    sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q, loading_meas_side = loading_meas_side,
+                                                         rel_tol = rel_tol, rel_tol_line = rel_tol_line)
+    
     if algorithm == "gp":
-        optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha, solver = solver)
+        optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha, solver = solver, **solver_kwargs)
     elif algorithm == "pd":
         optimizer = PrimalDualOptimizer(network, sensitivities, alpha = alpha,
-                                                alpha_v = alpha_v, alpha_l = alpha_l, alpha_t = alpha_t, solver = solver)
+                                                alpha_v = alpha_v, alpha_l = alpha_l, alpha_t = alpha_t, solver = solver, **solver_kwargs)
     else:
         raise ValueError(f"Unknown algorithm: {algorithm}")    
 
