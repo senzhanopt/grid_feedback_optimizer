@@ -144,16 +144,19 @@ class GradientProjectionOptimizer:
             self.P_transformer_meas.value = param_dict["P_transformer_meas"]
             self.Q_transformer_meas.value = param_dict["Q_transformer_meas"]
         
-
         try:
-            self.prob.solve(solver = getattr(cp, self.solver))
-        except:
-            print(self.prob.status)
-            # If solver fails, return last known feasible values
-            print("Solver failed, returning previous generator setpoints.")
+            self.prob.solve(solver=getattr(cp, self.solver))
+        except cp.error.SolverError as e:
+            print(f"Solver error: {e}")
+            print("Returning previous generator setpoints.")
             return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
+
+        # Check solver status
+        if self.prob.status == cp.OPTIMAL:
+            return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
         else:
-            if  self.prob.status == "optimal":
-                return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
-            else:            
-                return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
+            print(f"Solver finished with status: {self.prob.status}. Returning previous generator setpoints.")
+            return np.column_stack((param_dict["p_gen_last"], param_dict["q_gen_last"]))
