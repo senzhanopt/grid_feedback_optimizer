@@ -43,6 +43,14 @@ README.md
 pip install grid-feedback-optimizer
 ```
 
+## 🐳 Run with Docker
+
+You can run this project using the pre-built Docker image:
+
+```bash
+docker pull senzhan2025/grid-feedback-optimizer:latest
+docker run --rm -v $(pwd)/output:/app/output senzhan2025/grid-feedback-optimizer:latest examples/simple_example.json --save_path output/result.json --verbose
+```
 
 ## Usage
 
