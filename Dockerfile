@@ -15,7 +15,7 @@ COPY src/ ./src/
 COPY examples/ ./examples/
 
 # Add src to PYTHONPATH so imports work
-ENV PYTHONPATH=/app/src:$PYTHONPATH
+ENV PYTHONPATH=/app/src:${PYTHONPATH:-}
 
 # Prevent Python output buffering
 ENV PYTHONUNBUFFERED=1
