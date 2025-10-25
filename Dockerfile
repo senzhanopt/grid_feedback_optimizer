@@ -21,4 +21,4 @@ ENV PYTHONPATH=/app/src:$PYTHONPATH
 ENV PYTHONUNBUFFERED=1
 
 # Default command: run the optimizer
-ENTRYPOINT ["python", "src/main.py"]
+ENTRYPOINT ["python", "-m", "grid_feedback_optimizer.main"]
