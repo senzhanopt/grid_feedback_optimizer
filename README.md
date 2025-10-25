@@ -41,7 +41,7 @@ Ideal for experimenting with **voltage regulation** and **congestion management*
 **Cost Function:**
 
 
-\text{Cost} = c1\_p \cdot p + c2\_p \cdot (p - p\_norm)^2 + c1\_q \cdot q + c2\_q \cdot (q - q\_norm)^2
+Cost = c1_p * p + c2_p * (p - p_norm)^2 + c1_q * q + c2_q * (q - q_norm)^2
 
 Automatic `p_norm`:
 
