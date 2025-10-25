@@ -23,16 +23,16 @@ This package is designed for experimenting with **voltage regulation** and **con
 
 ```
 grid_feedback_optimizer/
-src/
-    grid_feedback_optimizer/
-        model/        # Loaders and I/O
-        engine/       # Power flow / optimization logic
-        utils/        # Helper functions
-        main.py
-examples/           # Example JSON/EXCEL network files
-tests/              # Tests
-requirements.txt    # Python dependencies
-README.md
+    src/
+        grid_feedback_optimizer/
+            model/        # Loaders and I/O
+            engine/       # Power flow / optimization logic
+            utils/        # Helper functions
+            main.py
+    examples/           # Example JSON/EXCEL network files
+    tests/              # Tests
+    requirements.txt    # Python dependencies
+    README.md
 ```
 
 ## ⚙️ Installation
