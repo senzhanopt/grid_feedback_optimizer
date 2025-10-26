@@ -11,12 +11,10 @@ tags:
 authors:
   - name: Sen Zhan
     orcid: 0000-0003-0405-5001
-    equal-contrib: false
     affiliation: 1
 affiliations:
  - name: Eindhoven University of Technology, The Netherlands
    index: 1
-   ror: 02c2kyt77
 
 date: 26 October 2025
 bibliography: paper.bib
@@ -29,14 +27,17 @@ bibliography: paper.bib
 # Statement of need
 
 
+Primal dual:　[@DallAnese2018]; 
 
 
-# Citations
 
 
 
 
 # Acknowledgements
+
+# Conflicts of interest
+The authors declare no conflicts of interest.
 
 
 # References
