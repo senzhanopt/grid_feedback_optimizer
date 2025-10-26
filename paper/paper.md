@@ -18,19 +18,16 @@ affiliations:
 
 date: 26 October 2025
 bibliography: paper.bib
-
-
+---
 
 # Summary
-
 
 # Statement of need
 
 
-Primal dual:　[@DallAnese2018]; 
+Primal dual: @DallAnese2018
 
-
-
+Gradient projection: @Haberle2021
 
 
 
