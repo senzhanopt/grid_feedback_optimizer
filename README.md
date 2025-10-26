@@ -138,7 +138,8 @@ flowchart LR
 ## ⚠️ Limitations
 
 - Currently supports **balanced systems** only  
-- Currently only includes **buses, lines, transformers, and sources** from [power-grid-model](https://power-grid-model.readthedocs.io/en/stable/user_manual/components.html)  
+- Currently only includes **buses, lines, transformers, and sources** as defined in [power-grid-model](https://power-grid-model.readthedocs.io/en/stable/user_manual/components.html)  
+- Restricted to single-period (real-time) optimization
 
 ---
 
