@@ -64,8 +64,7 @@ class RenewGen(BaseModel):
     s_inv: Optional[float] = None
     q_min: Optional[float] = None
     q_max: Optional[float] = None
-    ratio_q_to_p_min: Optional[float] = None
-    ratio_q_to_p_max: Optional[float] = None
+    pf_min: Optional[float] = None
     p_min: Optional[float] = 0.0
     q_norm: Optional[float] = 0.0
     p_norm: Optional[float] = None  # computed after initialization
