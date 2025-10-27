@@ -1,60 +1,17 @@
 import cvxpy as cp
 import numpy as np
+from functools import lru_cache
 
 class RenewGenProjection:
     """
     Project points onto the feasible inverter operating region.
-    Supports analytical (with p_min = 0) and CVXPY-based (free p_min) projections.
+    Supports analytical and CVXPY-based projections.
     """   
     def __init__(self, solver: str = "CLARABEL", **solver_kwargs):
         """Initialize the CVXPY problem for repeated projections."""
         self.solver = solver
         self.solver_kwargs = solver_kwargs
-        self._setup_qp()
 
-    # ---------------- CVXPY Projection Setup ----------------
-    def _setup_qp(self):
-        """Set up the CVXPY problem with Parameters for repeated solves."""
-        self.p_var = cp.Variable()
-        self.q_var = cp.Variable()
-        self.p_max = cp.Parameter()
-        self.p_min = cp.Parameter()
-        self.s_inv = cp.Parameter()
-        self.p = cp.Parameter()
-        self.q = cp.Parameter()
-
-        objective = cp.Minimize(cp.square(self.p_var - self.p) + cp.square(self.q_var - self.q))
-        cons = [
-            self.p_var >= self.p_min,
-            self.p_var <= self.p_max,
-            cp.SOC(self.s_inv, cp.hstack([self.p_var, self.q_var]))
-        ]
-
-        self.cvxpy_problem = cp.Problem(objective, cons)
-
-    def opt_projection(self, p_max: float, p_min: float, s_inv: float, p: float, q: float):
-        """Solve the CVXPY projection problem with updated parameter values."""
-        self.p_max.value = p_max
-        self.p_min.value = p_min
-        self.s_inv.value = s_inv
-        self.p.value = p
-        self.q.value = q
-
-        try:
-            # Solve the problem
-            self.cvxpy_problem.solve(solver=getattr(cp, self.solver), **self.solver_kwargs)
-        except cp.error.SolverError as e:
-            # Catch CVXPY solver-specific errors
-            raise ValueError(f"CVXPY solver error: {e}, status={self.cvxpy_problem.status}")
-        except Exception as e:
-            # Catch any other unexpected errors
-            raise ValueError(f"CVXPY projection failed due to unexpected error: {e}, status={self.cvxpy_problem.status}")
-
-        # Check solver status
-        if self.cvxpy_problem.status == cp.OPTIMAL:
-            return np.array([self.p_var.value, self.q_var.value])
-        else:
-            raise ValueError(f"CVXPY projection did not converge to optimal solution, status={self.cvxpy_problem.status}")
 
     @staticmethod
     def analytic_projection(p_max: float, s_inv: float, p: float, q: float):
@@ -128,3 +85,127 @@ class RenewGenProjection:
         raise ValueError(
             f"Projection failed for values: p_max={p_max:.3f}, s_inv={s_inv:.3f}, p={p:.3f}, q={q:.3f}"
         )
+
+
+    # ---------------- CVXPY Projection Setup ----------------
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def _build_problem(has_s_inv: bool = True, has_pf_min: bool = False, 
+                       has_q_min: bool = False, has_q_max: bool = False,
+                       is_generator: bool = True, is_load: bool = False):
+        """Set up the CVXPY problem with Parameters for repeated solves."""
+        p_var = cp.Variable()
+        q_var = cp.Variable()
+        p_max = cp.Parameter()
+        p_min = cp.Parameter()
+        p = cp.Parameter()
+        q = cp.Parameter()
+
+        vars = dict(p_var=p_var, q_var=q_var)
+        params = dict(p=p, q=q, p_max=p_max, p_min=p_min)
+
+        objective = cp.Minimize(cp.square(p_var - p) + cp.square(q_var - q))
+        cons = [p_var >= p_min, p_var <= p_max]
+
+        if has_s_inv:
+            s_inv = cp.Parameter(nonneg=True)
+            params['s_inv'] = s_inv
+            cons += [cp.SOC(s_inv, cp.hstack([p_var, q_var]))]
+
+        if has_pf_min:
+            tan_angle = cp.Parameter(nonneg=True)
+            params["tan_angle"] = tan_angle
+            if is_generator:
+                cons += [q_var <=  p_var * tan_angle, q_var >= -p_var * tan_angle]
+            elif is_load:
+                cons += [q_var <= - p_var * tan_angle, q_var >= p_var * tan_angle]
+            else:
+                # device can both generate and consume — drop PF constraint
+                print(
+                    "Warning: Controllable device can both generate and consume (p_min < 0 < p_max). "
+                    "Power factor constraint is skipped because the feasible region would be nonconvex."
+                )
+                if not has_s_inv: # the case when s_inv and pf_min are both None is handled as simple analytic projection
+                    print("Warning: Controllable device has unbounded reactive power.")
+
+        if has_q_min:
+            q_min = cp.Parameter()
+            params["q_min"] = q_min
+            cons += [q_var >= q_min]    
+        if has_q_max:
+            q_max = cp.Parameter()
+            params["q_max"] = q_max
+            cons += [q_var <= q_max]    
+
+        prob = cp.Problem(objective, cons)
+
+        return prob, params, vars
+
+    def projection(self, p_max: float, p_min: float, p: float, q: float,
+                   s_inv: float | None = None,
+                   pf_min: float | None = None,
+                   q_min: float | None = None,
+                   q_max: float | None = None):
+        """Hybrid projection: analytic if simple, CVXPY otherwise."""
+        
+        has_s_inv = s_inv is not None
+        has_pf_min = pf_min is not None        
+        has_q_min = q_min is not None
+        has_q_max = q_max is not None
+        is_generator = True if p_min >= 0 else False
+        is_load = True if p_max <= 0 else False
+
+        # Fast analytic case: rectangular p-q region
+        if (not has_s_inv) and (not has_pf_min):
+            q_min = q_min if has_q_min else -np.inf
+            q_max = q_max if has_q_max else np.inf
+            p_proj = np.clip(p, p_min, p_max)
+            q_proj = np.clip(q, q_min, q_max)
+            if (not has_q_min) or (not has_q_max):
+                print("Warning: Controllable device has unbounded reactive power.")
+            return np.array([p_proj, q_proj])
+            
+        # Fast analytic case: only s_inv
+        if has_s_inv and (not has_pf_min) and (not has_q_min) and (not has_q_max):
+            if p_min == 0 or (p_min < 0 and p_max > 0 and p >= 0):
+                return self.analytic_projection(p_max=p_max, s_inv=s_inv, p=p, q=q)
+            if p_max == 0 or (p_min < 0 and p_max > 0 and p < 0):
+                return self.analytic_projection(p_max=-p_min, s_inv=s_inv, p=-p, q=q) * np.array([-1.0,1.0])
+        
+        # all other cases where optimization problem is solved for projection
+        prob, params, vars = self._build_problem(has_s_inv=has_s_inv, has_pf_min=has_pf_min,
+                                                 has_q_min=has_q_min, has_q_max=has_q_max,
+                                                 is_generator = is_generator, is_load = is_load)
+
+        # assign values
+        params["p"].value = p
+        params["q"].value = q
+        params["p_max"].value = p_max
+        params["p_min"].value = p_min
+        if has_s_inv:
+            params["s_inv"].value = s_inv
+        if has_pf_min:
+            params["tan_angle"].value = np.tan(np.arccos(pf_min))
+        if has_q_max:
+            params["q_max"].value = q_max
+        if has_q_min:
+            params["q_min"].value = q_min        
+
+        try:
+            # Solve the problem
+            prob.solve(solver=getattr(cp, self.solver), **self.solver_kwargs)
+        except cp.error.SolverError as e:
+            # Catch CVXPY solver-specific errors
+            raise ValueError(f"CVXPY solver error: {e}, status={prob.status}")
+        except Exception as e:
+            # Catch any other unexpected errors
+            raise ValueError(f"CVXPY projection failed due to unexpected error: {e}, status={prob.status}")
+
+        # Check solver status
+        if prob.status == cp.OPTIMAL:
+            return np.array([vars["p_var"].value, vars["q_var"].value])
+        if prob.status == cp.OPTIMAL_INACCURATE:
+            print("Solver finished with status: OPTIMAL_INACCURATE")
+            return np.array([vars["p_var"].value, vars["q_var"].value])
+        else:
+            raise ValueError(f"CVXPY projection did not converge to optimal solution, status={prob.status}")

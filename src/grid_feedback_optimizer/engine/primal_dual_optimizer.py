@@ -44,7 +44,11 @@ class PrimalDualOptimizer:
         self.q_norm = np.array([gen.q_norm for gen in network.renew_gens])
         self.p_min = np.array([gen.p_min for gen in network.renew_gens])
         self.p_max = np.array([gen.p_max for gen in network.renew_gens])
+
         self.s_inv = np.array([gen.s_inv for gen in network.renew_gens])
+        self.pf_min = np.array([gen.pf_min for gen in network.renew_gens])
+        self.q_min = np.array([gen.q_min for gen in network.renew_gens])
+        self.q_max = np.array([gen.q_max for gen in network.renew_gens])
         
         # initialize dual variables
         self.dual_v_upp = np.zeros(self.n_bus)        
@@ -130,22 +134,21 @@ class PrimalDualOptimizer:
         p_target = param_dict["p_gen_last"]/self.param_scale - self.alpha * grad_p
         q_target = param_dict["q_gen_last"]/self.param_scale - self.alpha * grad_q
 
+        # expose them for advanced use of this library
+        self.p_target = p_target * self.param_scale
+        self.q_target = q_target * self.param_scale
+
         # call projection
         p_gen_opt = np.zeros(self.n_gen)
         q_gen_opt = np.zeros(self.n_gen)
         for i in range(self.n_gen):
-            if self.p_min[i] == 0.0: # generator
-                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(self.p_max[i]/self.param_scale, self.s_inv[i]/self.param_scale, p_target[i], q_target[i])
-            elif self.p_max[i] == 0.0: # flex load
-                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i]/self.param_scale, self.s_inv[i]/self.param_scale, -p_target[i], q_target[i])
-                p_gen_opt[i] *= -1.0
-            elif self.p_min[i] < 0 and self.p_max[i] > 0: # flex gen/load
-                if p_target[i] >= 0:
-                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(self.p_max[i]/self.param_scale, self.s_inv[i]/self.param_scale, p_target[i], q_target[i])
-                else:
-                    p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.analytic_projection(-self.p_min[i]/self.param_scale, self.s_inv[i]/self.param_scale, -p_target[i], q_target[i])
-                    p_gen_opt[i] *= -1.0
-            else: # no easy analytic solution
-                p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.opt_projection(self.p_max[i]/self.param_scale, self.p_min[i]/self.param_scale, self.s_inv[i]/self.param_scale, p_target[i], q_target[i])
+            p_gen_opt[i], q_gen_opt[i] = self.renew_gen_proj.projection(p_max = self.p_max[i]/self.param_scale,
+                                                                        p_min = self.p_min[i]/self.param_scale, 
+                                                                        p = p_target[i], 
+                                                                        q = q_target[i],
+                                                                        s_inv = self.s_inv[i]/self.param_scale if self.s_inv[i] is not None else None,
+                                                                        pf_min = self.pf_min[i],
+                                                                        q_min = self.q_min[i]/self.param_scale if self.q_min[i] is not None else None,
+                                                                        q_max = self.q_max[i]/self.param_scale if self.q_max[i] is not None else None)
         
         return self.param_scale * np.column_stack((p_gen_opt, q_gen_opt))
