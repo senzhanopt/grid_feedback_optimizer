@@ -30,8 +30,8 @@ class GradientProjectionOptimizer:
         n_gen = len(network.renew_gens)
 
         # === Scaling factors ===
-        s_inv_mean = np.mean([gen.s_inv for gen in network.renew_gens])
-        self.param_scale = 10**math.floor(math.log10(s_inv_mean)) # Round down to nearest lower power of 10
+        p_abs_mean = np.mean([max(abs(gen.p_max), abs(gen.p_min)) for gen in network.renew_gens])
+        self.param_scale = 10**math.floor(math.log10(p_abs_mean)) # Round down to nearest lower power of 10
 
         # Parameters  
         self.u_pu_meas = cp.Parameter(n_bus)
@@ -66,8 +66,34 @@ class GradientProjectionOptimizer:
         for i in range(n_gen):
             cons += [self.p_gen[i] <= self.p_max[i] / self.param_scale]
             cons += [self.p_gen[i] >= self.p_min[i] / self.param_scale]
-            cons += [cp.SOC(1.0, cp.hstack([self.p_gen[i], self.q_gen[i]])/(network.renew_gens[i].s_inv / self.param_scale))]
-        
+            has_q_limit = False
+            if network.renew_gens[i].s_inv is not None:
+                cons += [cp.SOC(1.0, cp.hstack([self.p_gen[i], self.q_gen[i]])/(network.renew_gens[i].s_inv / self.param_scale))]
+                has_q_limit = True
+            if network.renew_gens[i].pf_min is not None:
+                tan_phi = np.tan(np.arccos(network.renew_gens[i].pf_min))
+                if network.renew_gens[i].p_min >= 0: # generator
+                    cons += [self.q_gen[i] <= tan_phi * self.p_gen[i]]
+                    cons += [self.q_gen[i] >= -tan_phi * self.p_gen[i]]
+                    has_q_limit = True
+                elif network.renew_gens[i].p_max <= 0: # load
+                    cons += [self.q_gen[i] <= -tan_phi * self.p_gen[i]]
+                    cons += [self.q_gen[i] >= tan_phi * self.p_gen[i]]
+                    has_q_limit = True
+                else:
+                    # device can both generate and consume — drop PF constraint
+                    print(
+                        f"Warning: Controllable device {i} can both generate and consume (p_min < 0 < p_max). "
+                        "Power factor constraint is skipped because the feasible region would be nonconvex."
+                    )                       
+            if network.renew_gens[i].q_min is not None:
+                cons += [self.q_gen[i] >= network.renew_gens[i].q_min / self.param_scale]
+            if network.renew_gens[i].q_max is not None:
+                cons += [self.q_gen[i] <= network.renew_gens[i].q_max / self.param_scale]
+            if (network.renew_gens[i].q_min is not None) and (network.renew_gens[i].q_max is not None):
+                has_q_limit = True
+            if not has_q_limit:
+                print(f"Warning: Controllable device {i} has unbounded reactive power.")
         # voltage
         cons += [self.u_pu_meas + sensitivities["du_dp"]@(self.p_gen * self.param_scale - self.p_gen_last) 
                  + sensitivities["du_dq"]@(self.q_gen * self.param_scale  - self.q_gen_last) <= np.array([bus.u_pu_max for bus in network.buses])]
@@ -157,6 +183,9 @@ class GradientProjectionOptimizer:
 
         # Check solver status
         if self.prob.status == cp.OPTIMAL:
+            return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
+        if self.prob.status == cp.OPTIMAL_INACCURATE:
+            print("Solver finished with status: OPTIMAL_INACCURATE")
             return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
         else:
             print(f"Solver finished with status: {self.prob.status}. Returning previous generator setpoints.")

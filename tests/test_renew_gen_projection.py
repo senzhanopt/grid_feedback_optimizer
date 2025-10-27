@@ -8,24 +8,12 @@ def test_analytic_cvxpy():
 
     p_max, p_min, s_inv, p, q = 4.0, 0.0, 5.0, 5.0, 1.0
     expected = np.array([4.0, 1.0])
-
-    # Run both projections
-    result_analytic = renew_gen_proj.analytic_projection(p_max, s_inv, p, q)
-    result_opt = renew_gen_proj.opt_projection(p_max, p_min, s_inv, p, q)
-
-    # Check both methods agree
-    assert_allclose(result_analytic, expected, atol=1e-6)
-    assert_allclose(result_opt, expected, atol=1e-6)
-    assert_allclose(result_analytic, result_opt, atol=1e-6)
+    result = renew_gen_proj.projection(p_max=p_max,p_min=p_min,p=p,q=q,s_inv=s_inv)
+    assert_allclose(result, expected, atol=1e-6)
 
     p, q = 4.0, 4.0
     expected = np.array([5.0, 5.0])/np.sqrt(2)
+    result = renew_gen_proj.projection(p_max=p_max,p_min=p_min,p=p,q=q,s_inv=s_inv)
+    assert_allclose(result, expected, atol=1e-6)
 
-    # Run both projections
-    result_analytic = renew_gen_proj.analytic_projection(p_max, s_inv, p, q)
-    result_opt = renew_gen_proj.opt_projection(p_max, p_min, s_inv, p, q)
-
-    # Check both methods agree
-    assert_allclose(result_analytic, expected, atol=1e-6)
-    assert_allclose(result_opt, expected, atol=1e-6)
-    assert_allclose(result_analytic, result_opt, atol=1e-6)
+    result = renew_gen_proj.projection(p_max=p_max,p_min=p_min,p=p,q=q,s_inv=s_inv,pf_min=0.9)
