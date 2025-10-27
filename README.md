@@ -3,7 +3,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![ReadTheDocs](https://img.shields.io/readthedocs/grid-feedback-optimizer)](https://grid-feedback-optimizer.readthedocs.io/en/latest/)
+<!-- [![ReadTheDocs](https://img.shields.io/readthedocs/grid-feedback-optimizer)](https://grid-feedback-optimizer.readthedocs.io/en/latest/) -->
 
 A Python package for **feedback-based optimization** of generator and device setpoints in electrical distribution grids.
 
@@ -24,19 +24,21 @@ Ideal for experimenting with **voltage regulation** and **congestion management*
 
 | Type | Condition |
 |------|-----------|
-| Generator | `p_max > 0` and `p_min >= 0` |
-| Load | `p_max < 0` and `p_min <= 0` |
+| Generator | `0 <= p_min <= p_max` |
+| Load | `p_min <= p_max <= 0` |
 | Flexible | `p_min < 0 < p_max` (can generate or consume) |
 
 **Key Attributes:**
 
 - `index`, `bus` – identifiers  
-- `p_max`, `p_min` – active power limits  
-- `s_inv` – apparent power rating  
-- `p_norm` – normal active power (auto-computed)  
-- `q_norm` – normal reactive power (default 0.0)  
-- `c1_p`, `c2_p` – linear/quadratic active power cost coefficients  
-- `c1_q`, `c2_q` – linear/quadratic reactive power cost coefficients  
+- `p_max`, `p_min` – active power limits   
+- `p_norm` – normal active power (auto-computed if not provided)  
+- `q_norm` – normal reactive power (default: `0.0`)  
+- `c1_p`, `c2_p` – linear/quadratic active power cost coefficients (defaults: `0.0`, `1.0`) 
+- `c1_q`, `c2_q` – linear/quadratic reactive power cost coefficients (defaults: `0.0`, `0.1`) 
+- `s_inv` – apparent power rating (*optional*)
+- `pf_min` - minimum power factor (*optional*)
+- `q_max`, `q_min` – reactive power limits (*optional*)
 
 **Cost Function:**
 
@@ -47,7 +49,7 @@ Automatic `p_norm`:
 
 - Generator → `p_norm = p_max`  
 - Load → `p_norm = p_min`  
-- Flexible → `p_norm = 0`  
+- Flexible → `p_norm = 0.0`  
 
 ---
 
