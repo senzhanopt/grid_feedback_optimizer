@@ -66,29 +66,35 @@ class GradientProjectionOptimizer:
         for i in range(n_gen):
             cons += [self.p_gen[i] <= self.p_max[i] / self.param_scale]
             cons += [self.p_gen[i] >= self.p_min[i] / self.param_scale]
-
+            has_q_limit = False
             if network.renew_gens[i].s_inv is not None:
                 cons += [cp.SOC(1.0, cp.hstack([self.p_gen[i], self.q_gen[i]])/(network.renew_gens[i].s_inv / self.param_scale))]
-            if network.renew_gens[i].q_min is not None:
-                cons += [self.q_gen[i] >= network.renew_gens[i].q_min / self.param_scale]
-            if network.renew_gens[i].q_max is not None:
-                cons += [self.q_gen[i] <= network.renew_gens[i].q_max / self.param_scale]
+                has_q_limit = True
             if network.renew_gens[i].pf_min is not None:
                 tan_phi = np.tan(np.arccos(network.renew_gens[i].pf_min))
                 q_ratio_min, q_ratio_max = -tan_phi, tan_phi
                 if network.renew_gens[i].p_min >= 0: # generator
                     cons += [self.q_gen[i] <= q_ratio_max * self.p_gen[i]]
                     cons += [self.q_gen[i] >= q_ratio_min * self.p_gen[i]]
+                    has_q_limit = True
                 elif network.renew_gens[i].p_max <= 0: # load
                     cons += [self.q_gen[i] <= q_ratio_min * self.p_gen[i]]
                     cons += [self.q_gen[i] >= q_ratio_max * self.p_gen[i]]
+                    has_q_limit = True
                 else:
                     # device can both generate and consume — drop PF constraint
                     print(
                         f"Warning: Controllable device {i} can both generate and consume (p_min < 0 < p_max). "
                         "Power factor constraint is skipped because the feasible region would be nonconvex."
-                    )                    
-            
+                    )                       
+            if network.renew_gens[i].q_min is not None:
+                cons += [self.q_gen[i] >= network.renew_gens[i].q_min / self.param_scale]
+            if network.renew_gens[i].q_max is not None:
+                cons += [self.q_gen[i] <= network.renew_gens[i].q_max / self.param_scale]
+            if (network.renew_gens[i].q_min is not None) and (network.renew_gens[i].q_max is not None):
+                has_q_limit = True
+            if not has_q_limit:
+                print(f"Warning: Controllable device {i} has unbounded reactive power.")
         # voltage
         cons += [self.u_pu_meas + sensitivities["du_dp"]@(self.p_gen * self.param_scale - self.p_gen_last) 
                  + sensitivities["du_dq"]@(self.q_gen * self.param_scale  - self.q_gen_last) <= np.array([bus.u_pu_max for bus in network.buses])]
