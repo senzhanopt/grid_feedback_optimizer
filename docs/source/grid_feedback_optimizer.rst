@@ -11,6 +11,17 @@ Subpackages
    grid_feedback_optimizer.models
    grid_feedback_optimizer.utils
 
+Submodules
+----------
+
+grid\_feedback\_optimizer.main module
+-------------------------------------
+
+.. automodule:: grid_feedback_optimizer.main
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
@@ -18,8 +29,3 @@ Module contents
    :members:
    :show-inheritance:
    :undoc-members:
-
-.. automodule:: grid_feedback_optimizer.main
-   :members:
-   :undoc-members:
-   :show-inheritance:
