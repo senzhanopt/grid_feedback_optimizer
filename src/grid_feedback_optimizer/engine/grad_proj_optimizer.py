@@ -72,14 +72,13 @@ class GradientProjectionOptimizer:
                 has_q_limit = True
             if network.renew_gens[i].pf_min is not None:
                 tan_phi = np.tan(np.arccos(network.renew_gens[i].pf_min))
-                q_ratio_min, q_ratio_max = -tan_phi, tan_phi
                 if network.renew_gens[i].p_min >= 0: # generator
-                    cons += [self.q_gen[i] <= q_ratio_max * self.p_gen[i]]
-                    cons += [self.q_gen[i] >= q_ratio_min * self.p_gen[i]]
+                    cons += [self.q_gen[i] <= tan_phi * self.p_gen[i]]
+                    cons += [self.q_gen[i] >= -tan_phi * self.p_gen[i]]
                     has_q_limit = True
                 elif network.renew_gens[i].p_max <= 0: # load
-                    cons += [self.q_gen[i] <= q_ratio_min * self.p_gen[i]]
-                    cons += [self.q_gen[i] >= q_ratio_max * self.p_gen[i]]
+                    cons += [self.q_gen[i] <= -tan_phi * self.p_gen[i]]
+                    cons += [self.q_gen[i] >= tan_phi * self.p_gen[i]]
                     has_q_limit = True
                 else:
                     # device can both generate and consume — drop PF constraint
@@ -184,6 +183,9 @@ class GradientProjectionOptimizer:
 
         # Check solver status
         if self.prob.status == cp.OPTIMAL:
+            return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
+        if self.prob.status == cp.OPTIMAL_INACCURATE:
+            print("Solver finished with status: OPTIMAL_INACCURATE")
             return np.column_stack((self.p_gen.value, self.q_gen.value)) * self.param_scale
         else:
             print(f"Solver finished with status: {self.prob.status}. Returning previous generator setpoints.")
