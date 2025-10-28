@@ -180,3 +180,5 @@ tests/output/*
 
 # But keep the folder itself
 !tests/output/.gitkeep
+
+paper/jats/*
