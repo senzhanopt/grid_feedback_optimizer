@@ -56,7 +56,7 @@ The library also includes several example notebooks demonstrating its capabiliti
 This work is part of the NO-GIZMOS project (MOOI52109) which received funding from the Topsector Energie MOOI subsidy program of the Netherlands Ministry of Economic Affairs and Climate Policy, executed by the Netherlands Enterprise Agency (RVO).
 
 # Conflicts of interest
-The authors declare no conflicts of interest.
+The author declares no conflicts of interest.
 
 
 # References
