@@ -1,8 +1,7 @@
 import cvxpy as cp
 import numpy as np
 import math
-from grid_feedback_optimizer.models.network import Network
-from grid_feedback_optimizer.models.solve_data import OptimizationInputs
+from grid_feedback_optimizer.models.solve_data import OptimizationInputs, OptimizationModelData
 
 class GradientProjectionOptimizer:
     """
@@ -10,27 +9,27 @@ class GradientProjectionOptimizer:
     Caches the CVXPY problem to allow fast updates of parameters.
     """
 
-    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5, solver: str = "CLARABEL", **solver_kwargs):
+    def __init__(self, opt_model_data: OptimizationModelData, sensitivities: dict, alpha: float = 0.5, solver: str = "CLARABEL", **solver_kwargs):
         """
         Initialize optimizer and build cached problem.
         """
-        self.prob, self.cons, self.obj = self._build_problem(network, sensitivities, alpha)
+        self.prob, self.cons, self.obj = self._build_problem(opt_model_data, sensitivities, alpha)
         self.solver = solver
         self.solver_kwargs = solver_kwargs
 
 
-    def _build_problem(self, network: Network, sensitivities: dict, alpha: float):
+    def _build_problem(self, opt_model_data: OptimizationModelData, sensitivities: dict, alpha: float):
         """
         Build CVXPY problem with Parameters and Variables.
         Only called once. Returns dictionary with problem and variables/parameters.
         """    
-        n_bus = len(network.buses)
-        n_line = len(network.lines)
-        self.n_transformer = len(network.transformers)
-        n_gen = len(network.renew_gens)
+        n_bus = len(opt_model_data.u_pu_max)
+        n_line = len(opt_model_data.s_line)
+        self.n_transformer = len(opt_model_data.s_transformer)
+        n_gen = len(opt_model_data.p_min)
 
         # === Scaling factors ===
-        p_abs_mean = np.mean([max(abs(gen.p_max), abs(gen.p_min)) for gen in network.renew_gens])
+        p_abs_mean = np.mean([max(abs(opt_model_data.p_max[i]), abs(opt_model_data.p_min[i])) for i in range(n_gen)])
         self.param_scale = 10**math.floor(math.log10(p_abs_mean)) # Round down to nearest lower power of 10
 
         # Parameters  
@@ -54,10 +53,10 @@ class GradientProjectionOptimizer:
         self.p_norm = cp.Parameter(n_gen)
         self.q_norm = cp.Parameter(n_gen)
 
-        self.p_max.value = np.array([g.p_max for g in network.renew_gens])
-        self.p_min.value = np.array([g.p_min for g in network.renew_gens])
-        self.p_norm.value = np.array([g.p_norm for g in network.renew_gens])
-        self.q_norm.value = np.array([g.q_norm for g in network.renew_gens])
+        self.p_max.value = opt_model_data.p_max
+        self.p_min.value = opt_model_data.p_min
+        self.p_norm.value = opt_model_data.p_norm
+        self.q_norm.value = opt_model_data.q_norm
 
         # Constraints
         cons = []
@@ -67,16 +66,16 @@ class GradientProjectionOptimizer:
             cons += [self.p_gen[i] <= self.p_max[i] / self.param_scale]
             cons += [self.p_gen[i] >= self.p_min[i] / self.param_scale]
             has_q_limit = False
-            if network.renew_gens[i].s_inv is not None:
-                cons += [cp.SOC(1.0, cp.hstack([self.p_gen[i], self.q_gen[i]])/(network.renew_gens[i].s_inv / self.param_scale))]
+            if opt_model_data.s_inv[i] is not None:
+                cons += [cp.SOC(1.0, cp.hstack([self.p_gen[i], self.q_gen[i]])/(opt_model_data.s_inv[i] / self.param_scale))]
                 has_q_limit = True
-            if network.renew_gens[i].pf_min is not None:
-                tan_phi = np.tan(np.arccos(network.renew_gens[i].pf_min))
-                if network.renew_gens[i].p_min >= 0: # generator
+            if opt_model_data.pf_min[i] is not None:
+                tan_phi = np.tan(np.arccos(opt_model_data.pf_min[i]))
+                if opt_model_data.p_min[i] >= 0: # generator
                     cons += [self.q_gen[i] <= tan_phi * self.p_gen[i]]
                     cons += [self.q_gen[i] >= -tan_phi * self.p_gen[i]]
                     has_q_limit = True
-                elif network.renew_gens[i].p_max <= 0: # load
+                elif opt_model_data.p_max[i] <= 0: # load
                     cons += [self.q_gen[i] <= -tan_phi * self.p_gen[i]]
                     cons += [self.q_gen[i] >= tan_phi * self.p_gen[i]]
                     has_q_limit = True
@@ -86,24 +85,23 @@ class GradientProjectionOptimizer:
                         f"Warning: Controllable device {i} can both generate and consume (p_min < 0 < p_max). "
                         "Power factor constraint is skipped because the feasible region would be nonconvex."
                     )                       
-            if network.renew_gens[i].q_min is not None:
-                cons += [self.q_gen[i] >= network.renew_gens[i].q_min / self.param_scale]
-            if network.renew_gens[i].q_max is not None:
-                cons += [self.q_gen[i] <= network.renew_gens[i].q_max / self.param_scale]
-            if (network.renew_gens[i].q_min is not None) and (network.renew_gens[i].q_max is not None):
+            if opt_model_data.q_min[i] is not None:
+                cons += [self.q_gen[i] >= opt_model_data.q_min[i] / self.param_scale]
+            if opt_model_data.q_max[i] is not None:
+                cons += [self.q_gen[i] <= opt_model_data.q_max[i] / self.param_scale]
+            if (opt_model_data.q_min[i] is not None) and (opt_model_data.q_max[i] is not None):
                 has_q_limit = True
             if not has_q_limit:
                 print(f"Warning: Controllable device {i} has unbounded reactive power.")
         # voltage
         cons += [self.u_pu_meas + sensitivities["du_dp"]@(self.p_gen * self.param_scale - self.p_gen_last) 
-                 + sensitivities["du_dq"]@(self.q_gen * self.param_scale  - self.q_gen_last) <= np.array([bus.u_pu_max for bus in network.buses])]
+                 + sensitivities["du_dq"]@(self.q_gen * self.param_scale  - self.q_gen_last) <= opt_model_data.u_pu_max]
         cons += [self.u_pu_meas + sensitivities["du_dp"]@(self.p_gen * self.param_scale - self.p_gen_last)
-                 + sensitivities["du_dq"]@(self.q_gen  * self.param_scale - self.q_gen_last) >= np.array([bus.u_pu_min for bus in network.buses])]
+                 + sensitivities["du_dq"]@(self.q_gen  * self.param_scale - self.q_gen_last) >= opt_model_data.u_pu_min]
         
         # line
         for l in range(n_line):
-            line = network.lines[l]
-            s_line = np.sqrt(3) * line.i_n * network.buses[line.from_bus].u_rated
+            s_line = opt_model_data.s_line[l]
             cons += [cp.SOC(1.0, cp.hstack([
                 self.P_line_meas[l] + sensitivities["dP_line_dp"][l,:]@(self.p_gen * self.param_scale - self.p_gen_last) + sensitivities["dP_line_dq"][l,:]@(self.q_gen * self.param_scale - self.q_gen_last),
                 self.Q_line_meas[l] + sensitivities["dQ_line_dp"][l,:]@(self.p_gen * self.param_scale - self.p_gen_last) + sensitivities["dQ_line_dq"][l,:]@(self.q_gen * self.param_scale - self.q_gen_last)
@@ -112,18 +110,17 @@ class GradientProjectionOptimizer:
         # transformer
         if self.n_transformer >= 1:
             for t in range(self.n_transformer):
-                transformer = network.transformers[t]
-                s_transformer = transformer.sn
+                s_transformer = opt_model_data.s_transformer[t]
                 cons += [cp.SOC(1.0, cp.hstack([
                     self.P_transformer_meas[t] + sensitivities["dP_transformer_dp"][t,:]@(self.p_gen * self.param_scale - self.p_gen_last) + sensitivities["dP_transformer_dq"][t,:]@(self.q_gen * self.param_scale - self.q_gen_last),
                     self.Q_transformer_meas[t] + sensitivities["dQ_transformer_dp"][t,:]@(self.p_gen * self.param_scale - self.p_gen_last) + sensitivities["dQ_transformer_dq"][t,:]@(self.q_gen * self.param_scale - self.q_gen_last)
                 ])/s_transformer)]                 
         
         # Objective
-        grad_p = 2.0 * cp.multiply( np.array([gen.c2_p for gen in network.renew_gens]), (self.p_gen_last - self.p_norm))
-        grad_p += np.array([gen.c1_p for gen in network.renew_gens])
-        grad_q = 2.0 * cp.multiply(np.array([gen.c2_q for gen in network.renew_gens]), (self.q_gen_last - self.q_norm))
-        grad_q += np.array([gen.c1_q for gen in network.renew_gens])
+        grad_p = 2.0 * cp.multiply( opt_model_data.c2_p, (self.p_gen_last - self.p_norm))
+        grad_p += opt_model_data.c1_p
+        grad_q = 2.0 * cp.multiply( opt_model_data.c2_q, (self.q_gen_last - self.q_norm))
+        grad_q += opt_model_data.c1_q
 
         obj = cp.Minimize(
             cp.sum_squares(self.p_gen - (self.p_gen_last - alpha * grad_p) / self.param_scale) +

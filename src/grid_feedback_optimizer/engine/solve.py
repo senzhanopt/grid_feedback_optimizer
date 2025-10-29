@@ -6,6 +6,7 @@ from grid_feedback_optimizer.engine.primal_dual_optimizer import PrimalDualOptim
 import copy
 from power_grid_model import ComponentType
 from grid_feedback_optimizer.models.solve_data import SolveResults, OptimizationInputs
+from grid_feedback_optimizer.utils.utils import network_to_model_data
 
 def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
           delta_p: float = 1.0, delta_q: float = 1.0, algorithm: str = "gp", 
@@ -23,10 +24,11 @@ def solve(network: Network, max_iter: int = 1000, tol: float = 1e-3,
     sensitivities = power_flow_solver.obtain_sensitivity(delta_p = delta_p, delta_q = delta_q, loading_meas_side = loading_meas_side,
                                                          rel_tol = rel_tol, rel_tol_line = rel_tol_line)
     
+    opt_model_data = network_to_model_data(network)
     if algorithm == "gp":
-        optimizer = GradientProjectionOptimizer(network, sensitivities, alpha = alpha, solver = solver, **solver_kwargs)
+        optimizer = GradientProjectionOptimizer(opt_model_data, sensitivities, alpha = alpha, solver = solver, **solver_kwargs)
     elif algorithm == "pd":
-        optimizer = PrimalDualOptimizer(network, sensitivities, alpha = alpha,
+        optimizer = PrimalDualOptimizer(opt_model_data, sensitivities, alpha = alpha,
                                                 alpha_v = alpha_v, alpha_l = alpha_l, alpha_t = alpha_t, solver = solver, **solver_kwargs)
     else:
         raise ValueError(f"Unknown algorithm: {algorithm}")    
