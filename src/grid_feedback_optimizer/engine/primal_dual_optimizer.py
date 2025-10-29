@@ -1,6 +1,5 @@
-from grid_feedback_optimizer.models.network import Network
 from grid_feedback_optimizer.engine.renew_gen_projection import RenewGenProjection
-from grid_feedback_optimizer.models.solve_data import OptimizationInputs
+from grid_feedback_optimizer.models.solve_data import OptimizationInputs, OptimizationModelData
 import numpy as np
 import math
 from collections.abc import Callable
@@ -9,7 +8,7 @@ class PrimalDualOptimizer:
     """
     A primal-dual gradient projection feedback optimizer.
     """
-    def __init__(self, network: Network, sensitivities: dict, alpha: float = 0.5,
+    def __init__(self, opt_model_data: OptimizationModelData, sensitivities: dict, alpha: float = 0.5,
                  alpha_v: float = 10.0, alpha_l: float = 10.0, alpha_t: float = 10.0,
                  solver: str = "CLARABEL", **solver_kwargs):
         """
@@ -22,33 +21,33 @@ class PrimalDualOptimizer:
         self.alpha_t = alpha_t
         self.renew_gen_proj = RenewGenProjection(solver = solver, **solver_kwargs)
 
+        # read parameters from opt_model_data
+        self.n_bus = len(opt_model_data.u_pu_max)
+        self.n_line = len(opt_model_data.s_line)
+        self.n_transformer = len(opt_model_data.s_transformer)
+        self.n_gen = len(opt_model_data.p_min)
+
         # === Scaling factors ===
-        s_inv_mean = np.mean([gen.s_inv for gen in network.renew_gens])
-        self.param_scale = 10**math.floor(math.log10(s_inv_mean)) # Round down to nearest lower power of 10
+        p_abs_mean = np.mean([max(abs(opt_model_data.p_max[i]), abs(opt_model_data.p_min[i])) for i in range(self.n_gen)])
+        self.param_scale = 10**math.floor(math.log10(p_abs_mean)) # Round down to nearest lower power of 10
 
-        # read parameters from network
-        self.n_bus = len(network.buses)
-        self.n_line = len(network.lines)
-        self.n_transformer = len(network.transformers)
-        self.n_gen = len(network.renew_gens)
+        self.u_pu_max = opt_model_data.u_pu_max
+        self.u_pu_min = opt_model_data.u_pu_min
+        self.s_line = opt_model_data.s_line
 
-        self.u_pu_max = np.array([bus.u_pu_max for bus in network.buses])
-        self.u_pu_min = np.array([bus.u_pu_min for bus in network.buses])
-        self.s_line = np.sqrt(3) * np.array([line.i_n * network.buses[line.from_bus].u_rated for line in network.lines])
+        self.c2_p = opt_model_data.c2_p
+        self.c1_p = opt_model_data.c1_p
+        self.c2_q = opt_model_data.c2_q
+        self.c1_q = opt_model_data.c1_q
+        self.p_norm = opt_model_data.p_norm
+        self.q_norm = opt_model_data.q_norm
+        self.p_min = opt_model_data.p_min
+        self.p_max = opt_model_data.p_max
 
-        self.c2_p = np.array([gen.c2_p for gen in network.renew_gens])
-        self.c1_p = np.array([gen.c1_p for gen in network.renew_gens])
-        self.c2_q = np.array([gen.c2_q for gen in network.renew_gens])
-        self.c1_q = np.array([gen.c1_q for gen in network.renew_gens])
-        self.p_norm = np.array([gen.p_norm for gen in network.renew_gens])
-        self.q_norm = np.array([gen.q_norm for gen in network.renew_gens])
-        self.p_min = np.array([gen.p_min for gen in network.renew_gens])
-        self.p_max = np.array([gen.p_max for gen in network.renew_gens])
-
-        self.s_inv = np.array([gen.s_inv for gen in network.renew_gens])
-        self.pf_min = np.array([gen.pf_min for gen in network.renew_gens])
-        self.q_min = np.array([gen.q_min for gen in network.renew_gens])
-        self.q_max = np.array([gen.q_max for gen in network.renew_gens])
+        self.s_inv = opt_model_data.s_inv
+        self.pf_min = opt_model_data.pf_min
+        self.q_min = opt_model_data.q_min
+        self.q_max = opt_model_data.q_max
         
         # initialize dual variables
         self.dual_v_upp = np.zeros(self.n_bus)        
@@ -56,7 +55,7 @@ class PrimalDualOptimizer:
         self.dual_line = np.zeros(self.n_line)        
         if self.n_transformer >= 1:
             self.dual_transformer = np.zeros(self.n_transformer)
-            self.s_transformer = np.array([transformer.sn for transformer in network.transformers])
+            self.s_transformer = opt_model_data.s_transformer
 
     @staticmethod
     def calc_loading(p: np.ndarray | float, q: np.ndarray | float, s: np.ndarray | float) -> np.ndarray | float:

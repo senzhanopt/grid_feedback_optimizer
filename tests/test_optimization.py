@@ -5,6 +5,7 @@ from grid_feedback_optimizer.engine.powerflow import PowerFlowSolver
 from grid_feedback_optimizer.engine.grad_proj_optimizer import GradientProjectionOptimizer
 from grid_feedback_optimizer.engine.primal_dual_optimizer import PrimalDualOptimizer
 from grid_feedback_optimizer.models.solve_data import OptimizationInputs
+from grid_feedback_optimizer.utils.utils import network_to_model_data
 
 def test_optimization_from_example():
 
@@ -15,7 +16,8 @@ def test_optimization_from_example():
     network = load_network(EXAMPLE_JSON)
     power_flow_solver = PowerFlowSolver(network)
     sensitivities = power_flow_solver.obtain_sensitivity()
-    optimizer = GradientProjectionOptimizer(network, sensitivities)
+    opt_model_data = network_to_model_data(network)
+    optimizer = GradientProjectionOptimizer(opt_model_data, sensitivities)
 
     param_dict = {
         "u_pu_meas": np.array([1.0,1.08]),
@@ -38,7 +40,8 @@ def test_optimization_from_example_with_transformer():
     network = load_network(EXAMPLE_JSON)
     power_flow_solver = PowerFlowSolver(network)
     sensitivities = power_flow_solver.obtain_sensitivity()
-    optimizer = GradientProjectionOptimizer(network, sensitivities)
+    opt_model_data = network_to_model_data(network)
+    optimizer = GradientProjectionOptimizer(opt_model_data, sensitivities)
 
     param_dict = {
         "u_pu_meas": np.array([1.0,1.0,1.08]),
@@ -63,7 +66,8 @@ def test_optimization_from_example_with_transformer_from_excel():
     network = load_network_from_excel(EXAMPLE_EXCEL)
     power_flow_solver = PowerFlowSolver(network)
     sensitivities = power_flow_solver.obtain_sensitivity()
-    optimizer = GradientProjectionOptimizer(network, sensitivities)
+    opt_model_data = network_to_model_data(network)
+    optimizer = GradientProjectionOptimizer(opt_model_data, sensitivities)
 
     param_dict = {
         "u_pu_meas": np.array([1.0,1.0,1.08]),
@@ -88,7 +92,8 @@ def test_pd_optimization_from_example_with_transformer():
     network = load_network(EXAMPLE_JSON)
     power_flow_solver = PowerFlowSolver(network)
     sensitivities = power_flow_solver.obtain_sensitivity()
-    optimizer = PrimalDualOptimizer(network, sensitivities)
+    opt_model_data = network_to_model_data(network)
+    optimizer = PrimalDualOptimizer(opt_model_data, sensitivities)
 
     param_dict = {
         "u_pu_meas": np.array([1.0,1.0,1.08]),
