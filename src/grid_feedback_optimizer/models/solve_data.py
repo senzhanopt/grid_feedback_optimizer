@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import numpy as np
@@ -165,8 +165,95 @@ class OptimizationInputs(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    @model_validator(mode="after")
+    def check_lengths(self):
+        """Ensure measurement and generator arrays have consistent lengths."""
+
+        # --- 1️. Check generator data lengths ---
+        if len(self.p_gen_last) != len(self.q_gen_last):
+            raise ValueError(
+                f"p_gen_last and q_gen_last must have the same length: "
+                f"(got {len(self.p_gen_last)} vs {len(self.q_gen_last)})."
+            )
+
+        # --- 2️. Check line flow data lengths ---
+        if len(self.P_line_meas) != len(self.Q_line_meas):
+            raise ValueError(
+                f"P_line_meas and Q_line_meas must have the same length: "
+                f"(got {len(self.P_line_meas)} vs {len(self.Q_line_meas)})."
+            )
+
+        # --- 3️. Check transformer data lengths (if provided) ---
+        if self.P_transformer_meas is not None and self.Q_transformer_meas is not None:
+            if len(self.P_transformer_meas) != len(self.Q_transformer_meas):
+                raise ValueError(
+                    f"P_transformer_meas and Q_transformer_meas must have the same length: "
+                    f"(got {len(self.P_transformer_meas)} vs {len(self.Q_transformer_meas)})."
+                )
+
+        return self
+
     def to_dict(self):
         """Convert to a plain dict (for compatibility with existing code)."""
         data = self.model_dump()
         # Remove None entries (if transformers don’t exist)
         return {k: v for k, v in data.items() if v is not None}
+    
+class OptimizationModelData(BaseModel):
+    """Minimal structure needed for the optimizer."""
+    # generator data
+    p_min: np.ndarray
+    p_max: np.ndarray
+    q_min: Optional[np.ndarray] = None
+    q_max: Optional[np.ndarray] = None
+    s_inv: Optional[np.ndarray] = None
+    pf_min: Optional[np.ndarray] = None
+
+    c1_p: np.ndarray
+    c2_p: np.ndarray
+    c1_q: np.ndarray
+    c2_q: np.ndarray
+
+    p_norm: np.ndarray
+    q_norm: np.ndarray
+
+    # voltage and branch data
+    u_pu_max: np.ndarray
+    u_pu_min: np.ndarray
+    s_line: np.ndarray
+    s_transformer: Optional[np.ndarray] = None
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @model_validator(mode="after")
+    def check_fill_optional_arrays(self):
+        """Ensure optional arrays are initialized as arrays of None if missing."""
+        # === Step 1: Generator array consistency ===
+        n_gen = len(self.p_min)
+        same_length_fields = [
+            "p_max", "c1_p", "c2_p", "c1_q", "c2_q", "p_norm", "q_norm"
+        ]
+        for f in same_length_fields:
+            arr = getattr(self, f)
+            if len(arr) != n_gen:
+                raise ValueError(f"Array '{f}' has length {len(arr)}, expected {n_gen}.")
+        # === Step 2: Voltage array consistency ===
+        if len(self.u_pu_max) != len(self.u_pu_min):
+            raise ValueError(
+                f"u_pu_max and u_pu_min must have the same length: "
+                f"(got {len(self.u_pu_max)} vs {len(self.u_pu_min)})."
+            )
+        
+        # === Step 3: Fill missing optional generator arrays ===
+        def make_none_array(x):
+            return x if x is not None else np.array([None] * n_gen, dtype=object)
+
+        self.q_min = make_none_array(self.q_min)
+        self.q_max = make_none_array(self.q_max)
+        self.s_inv = make_none_array(self.s_inv)
+        self.pf_min = make_none_array(self.pf_min)
+
+        if self.s_transformer is None:
+            self.s_transformer = np.array([], dtype=float)
+
+        return self        
