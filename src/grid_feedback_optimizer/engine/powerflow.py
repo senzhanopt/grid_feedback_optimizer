@@ -1,4 +1,3 @@
-from grid_feedback_optimizer.models.network import Network
 import numpy as np
 import pandas as pd
 from power_grid_model import (
@@ -14,11 +13,14 @@ from power_grid_model import (
 )
 from power_grid_model.validation import assert_valid_input_data
 
+from grid_feedback_optimizer.models.network import Network
+
 
 class PowerFlowSolver:
     """
     Run a power flow simulation and return bus voltages and line currents.
     """
+
     def __init__(self, network: Network):
         self.build_network(network)
 
@@ -29,7 +31,6 @@ class PowerFlowSolver:
         max_abs = np.max(np.abs(A))
         A[np.abs(A) < rel_tol * max_abs] = 0.0
         return A
-
 
     def build_network(self, network: Network):
         id_count = 0
@@ -58,10 +59,16 @@ class PowerFlowSolver:
         # transformer
         n_transformer = len(network.transformers)
         if n_transformer >= 1:
-            transformer = initialize_array(DatasetType.input, ComponentType.transformer, n_transformer)
+            transformer = initialize_array(
+                DatasetType.input, ComponentType.transformer, n_transformer
+            )
             transformer["id"] = np.arange(id_count, id_count + n_transformer)
-            transformer["from_node"] = [transformer.from_bus for transformer in network.transformers]
-            transformer["to_node"] = [transformer.to_bus for transformer in network.transformers]
+            transformer["from_node"] = [
+                transformer.from_bus for transformer in network.transformers
+            ]
+            transformer["to_node"] = [
+                transformer.to_bus for transformer in network.transformers
+            ]
             transformer["from_status"] = [1] * n_transformer
             transformer["to_status"] = [1] * n_transformer
             transformer["u1"] = [transformer.u1 for transformer in network.transformers]
@@ -71,16 +78,31 @@ class PowerFlowSolver:
             transformer["pk"] = [transformer.pk for transformer in network.transformers]
             transformer["i0"] = [transformer.i0 for transformer in network.transformers]
             transformer["p0"] = [transformer.p0 for transformer in network.transformers]
-            transformer["winding_from"] = [transformer.winding_from for transformer in network.transformers]
-            transformer["winding_to"] = [transformer.winding_to for transformer in network.transformers]
-            transformer["clock"] = [transformer.clock for transformer in network.transformers]
-            transformer["tap_side"] = [transformer.tap_side for transformer in network.transformers]
-            transformer["tap_pos"] = [transformer.tap_pos for transformer in network.transformers]
-            transformer["tap_min"] = [transformer.tap_min for transformer in network.transformers]
-            transformer["tap_max"] = [transformer.tap_max for transformer in network.transformers]
-            transformer["tap_size"] = [transformer.tap_size for transformer in network.transformers]
+            transformer["winding_from"] = [
+                transformer.winding_from for transformer in network.transformers
+            ]
+            transformer["winding_to"] = [
+                transformer.winding_to for transformer in network.transformers
+            ]
+            transformer["clock"] = [
+                transformer.clock for transformer in network.transformers
+            ]
+            transformer["tap_side"] = [
+                transformer.tap_side for transformer in network.transformers
+            ]
+            transformer["tap_pos"] = [
+                transformer.tap_pos for transformer in network.transformers
+            ]
+            transformer["tap_min"] = [
+                transformer.tap_min for transformer in network.transformers
+            ]
+            transformer["tap_max"] = [
+                transformer.tap_max for transformer in network.transformers
+            ]
+            transformer["tap_size"] = [
+                transformer.tap_size for transformer in network.transformers
+            ]
             id_count += n_transformer
-
 
         # source
         n_source = len(network.sources)
@@ -123,13 +145,18 @@ class PowerFlowSolver:
         }
         if n_transformer >= 1:
             input_data[ComponentType.transformer] = transformer
-        
+
         # validation
-        assert_valid_input_data(input_data=input_data, calculation_type=CalculationType.power_flow)
+        assert_valid_input_data(
+            input_data=input_data, calculation_type=CalculationType.power_flow
+        )
 
         model = PowerGridModel(input_data)
         output_data = model.calculate_power_flow(
-            symmetric=True, error_tolerance=1e-8, max_iterations=20, calculation_method=CalculationMethod.newton_raphson
+            symmetric=True,
+            error_tolerance=1e-8,
+            max_iterations=20,
+            calculation_method=CalculationMethod.newton_raphson,
         )
 
         self.n_bus = n_bus
@@ -144,7 +171,7 @@ class PowerFlowSolver:
         self.u_pu_max = np.array([bus.u_pu_max for bus in network.buses])
         self.u_pu_min = np.array([bus.u_pu_min for bus in network.buses])
         self.node_source = source["node"]
-    
+
     @property
     def is_congested(self):
         """
@@ -155,22 +182,25 @@ class PowerFlowSolver:
         """
         # Bus voltage check
         bus_voltages = self.base_output_data[ComponentType.node]["u_pu"]
-        voltage_violation = np.any(bus_voltages > self.u_pu_max) or np.any(bus_voltages < self.u_pu_min)
-        
+        voltage_violation = np.any(bus_voltages > self.u_pu_max) or np.any(
+            bus_voltages < self.u_pu_min
+        )
+
         # Line loading check
         line_loading = self.base_output_data[ComponentType.line]["loading"]
         line_overload = np.any(line_loading > 1.0)
 
         # Transformer loading check
         if self.n_transformer >= 1:
-            transformer_loading = self.base_output_data[ComponentType.transformer]["loading"]
+            transformer_loading = self.base_output_data[ComponentType.transformer][
+                "loading"
+            ]
             transformer_overload = np.any(transformer_loading > 1.0)
         else:
             transformer_overload = False
 
         # Return True if any violation occurs
         return voltage_violation or line_overload or transformer_overload
-        
 
     def run(self, gen_update: np.ndarray = None, load_update: np.ndarray = None):
         """
@@ -179,27 +209,40 @@ class PowerFlowSolver:
         """
         update_data_no_id = {}
         if gen_update is not None:
-            update_sym_gen_no_id = initialize_array(DatasetType.update, ComponentType.sym_gen, self.n_gen)
+            update_sym_gen_no_id = initialize_array(
+                DatasetType.update, ComponentType.sym_gen, self.n_gen
+            )
             update_sym_gen_no_id["p_specified"] = gen_update[:, 0]
             update_sym_gen_no_id["q_specified"] = gen_update[:, 1]
             update_data_no_id[ComponentType.sym_gen] = update_sym_gen_no_id
 
         if load_update is not None:
-            update_sym_load_no_id = initialize_array(DatasetType.update, ComponentType.sym_load, self.n_load)
+            update_sym_load_no_id = initialize_array(
+                DatasetType.update, ComponentType.sym_load, self.n_load
+            )
             update_sym_load_no_id["p_specified"] = load_update[:, 0]
             update_sym_load_no_id["q_specified"] = load_update[:, 1]
             update_data_no_id[ComponentType.sym_load] = update_sym_load_no_id
 
         # rerun
-        self.model.update(update_data = update_data_no_id)
+        self.model.update(update_data=update_data_no_id)
         output_data = self.model.calculate_power_flow(
-            symmetric=True, error_tolerance=1e-8, max_iterations=20, calculation_method=CalculationMethod.newton_raphson
+            symmetric=True,
+            error_tolerance=1e-8,
+            max_iterations=20,
+            calculation_method=CalculationMethod.newton_raphson,
         )
 
         return output_data
-    
-    def obtain_sensitivity(self, delta_p: float = 1.0, delta_q: float = 1.0, loading_meas_side: str = "from",
-                           rel_tol: float = 1E-4, rel_tol_line: float = 1E-2):
+
+    def obtain_sensitivity(
+        self,
+        delta_p: float = 1.0,
+        delta_q: float = 1.0,
+        loading_meas_side: str = "from",
+        rel_tol: float = 1e-4,
+        rel_tol_line: float = 1e-2,
+    ):
         """
         Compute sensitivities of bus voltages and line/transformer power flows to small perturbations
         in generator power injections (p and q) around the default operating point.
@@ -231,11 +274,23 @@ class PowerFlowSolver:
         """
         # Base operating point
         u_pu_base = np.array(self.base_output_data[ComponentType.node]["u_pu"])
-        P_line_base = np.array(self.base_output_data[ComponentType.line]["p_"+loading_meas_side])
-        Q_line_base = np.array(self.base_output_data[ComponentType.line]["q_"+loading_meas_side])
+        P_line_base = np.array(
+            self.base_output_data[ComponentType.line]["p_" + loading_meas_side]
+        )
+        Q_line_base = np.array(
+            self.base_output_data[ComponentType.line]["q_" + loading_meas_side]
+        )
         if self.n_transformer >= 1:
-            P_transformer_base = np.array(self.base_output_data[ComponentType.transformer]["p_"+loading_meas_side])
-            Q_transformer_base = np.array(self.base_output_data[ComponentType.transformer]["q_"+loading_meas_side])
+            P_transformer_base = np.array(
+                self.base_output_data[ComponentType.transformer][
+                    "p_" + loading_meas_side
+                ]
+            )
+            Q_transformer_base = np.array(
+                self.base_output_data[ComponentType.transformer][
+                    "q_" + loading_meas_side
+                ]
+            )
         gen_base = np.column_stack((self.base_p_gen, self.base_q_gen))
 
         # Allocate arrays
@@ -257,19 +312,27 @@ class PowerFlowSolver:
             gen_base[g, 0] += delta_p
             output_p = self.run(gen_update=gen_base)
             u_pu_p = np.array(output_p[ComponentType.node]["u_pu"])
-            P_line_p = np.array(output_p[ComponentType.line]["p_"+loading_meas_side])
-            Q_line_p = np.array(output_p[ComponentType.line]["q_"+loading_meas_side])
+            P_line_p = np.array(output_p[ComponentType.line]["p_" + loading_meas_side])
+            Q_line_p = np.array(output_p[ComponentType.line]["q_" + loading_meas_side])
             if self.n_transformer >= 1:
-                P_transformer_p = np.array(output_p[ComponentType.transformer]["p_"+loading_meas_side])
-                Q_transformer_p = np.array(output_p[ComponentType.transformer]["q_"+loading_meas_side])
+                P_transformer_p = np.array(
+                    output_p[ComponentType.transformer]["p_" + loading_meas_side]
+                )
+                Q_transformer_p = np.array(
+                    output_p[ComponentType.transformer]["q_" + loading_meas_side]
+                )
 
             du_dp[:, g] = (u_pu_p - u_pu_base) / delta_p
             dP_line_dp[:, g] = (P_line_p - P_line_base) / delta_p
             dQ_line_dp[:, g] = (Q_line_p - Q_line_base) / delta_p
             if self.n_transformer >= 1:
-                dP_transformer_dp[:, g] = (P_transformer_p - P_transformer_base) / delta_p
-                dQ_transformer_dp[:, g] = (Q_transformer_p - Q_transformer_base) / delta_p
-            
+                dP_transformer_dp[:, g] = (
+                    P_transformer_p - P_transformer_base
+                ) / delta_p
+                dQ_transformer_dp[:, g] = (
+                    Q_transformer_p - Q_transformer_base
+                ) / delta_p
+
             # recover to the base power
             gen_base[g, 0] -= delta_p
 
@@ -277,19 +340,27 @@ class PowerFlowSolver:
             gen_base[g, 1] += delta_q
             output_q = self.run(gen_update=gen_base)
             u_pu_q = np.array(output_q[ComponentType.node]["u_pu"])
-            P_line_q = np.array(output_q[ComponentType.line]["p_"+loading_meas_side])
-            Q_line_q = np.array(output_q[ComponentType.line]["q_"+loading_meas_side])
+            P_line_q = np.array(output_q[ComponentType.line]["p_" + loading_meas_side])
+            Q_line_q = np.array(output_q[ComponentType.line]["q_" + loading_meas_side])
             if self.n_transformer >= 1:
-                P_transformer_q = np.array(output_q[ComponentType.transformer]["p_"+loading_meas_side])
-                Q_transformer_q = np.array(output_q[ComponentType.transformer]["q_"+loading_meas_side])
+                P_transformer_q = np.array(
+                    output_q[ComponentType.transformer]["p_" + loading_meas_side]
+                )
+                Q_transformer_q = np.array(
+                    output_q[ComponentType.transformer]["q_" + loading_meas_side]
+                )
 
             du_dq[:, g] = (u_pu_q - u_pu_base) / delta_q
             dP_line_dq[:, g] = (P_line_q - P_line_base) / delta_q
             dQ_line_dq[:, g] = (Q_line_q - Q_line_base) / delta_q
             if self.n_transformer >= 1:
-                dP_transformer_dq[:, g] = (P_transformer_q - P_transformer_base) / delta_q
-                dQ_transformer_dq[:, g] = (Q_transformer_q - Q_transformer_base) / delta_q
-            
+                dP_transformer_dq[:, g] = (
+                    P_transformer_q - P_transformer_base
+                ) / delta_q
+                dQ_transformer_dq[:, g] = (
+                    Q_transformer_q - Q_transformer_base
+                ) / delta_q
+
             # recover to the base power
             gen_base[g, 1] -= delta_q
 
@@ -313,14 +384,13 @@ class PowerFlowSolver:
             dP_transformer_dq = self.prune_relative(dP_transformer_dq, rel_tol=rel_tol)
             dQ_transformer_dq = self.prune_relative(dQ_transformer_dq, rel_tol=rel_tol)
 
-
         sensitivities = {
             "du_dp": du_dp,
             "du_dq": du_dq,
             "dP_line_dp": dP_line_dp,
             "dQ_line_dp": dQ_line_dp,
             "dP_line_dq": dP_line_dq,
-            "dQ_line_dq": dQ_line_dq
+            "dQ_line_dq": dQ_line_dq,
         }
 
         if self.n_transformer >= 1:

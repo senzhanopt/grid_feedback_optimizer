@@ -1,13 +1,15 @@
-from typing import Optional, List
+from typing import List, Optional
+
+from power_grid_model import BranchSide, WindingType
 from pydantic import BaseModel, Field, model_validator
-from power_grid_model import WindingType, BranchSide
 
 # -------- Core Models -------- #
 # unit in W, V, A
 
+
 class Bus(BaseModel):
     index: int
-    u_rated: float 
+    u_rated: float
     u_pu_max: float
     u_pu_min: float
 
@@ -21,6 +23,7 @@ class Line(BaseModel):
     c1: float
     tan1: float
     i_n: float
+
 
 class Transformer(BaseModel):
     index: int
@@ -52,12 +55,13 @@ class Source(BaseModel):
 class RenewGen(BaseModel):
     """
     Represents a renewable generator or power-consuming device.
-    
+
     Notes:
         - If p_max > 0 and p_min >= 0 → behaves as a generator.
         - If p_max <= 0 and p_min <= 0 → behaves as a load/consuming device.
         - Mixed cases (p_min < 0 < p_max) → flexible device (can consume or generate).
     """
+
     index: int
     bus: int
     p_max: float
@@ -74,7 +78,7 @@ class RenewGen(BaseModel):
         """Compute p_norm only if not provided by user."""
         if self.p_norm is not None:
             return self
-    
+
         if self.p_min >= 0:
             self.p_norm = self.p_max
         elif self.p_max <= 0:
@@ -82,7 +86,7 @@ class RenewGen(BaseModel):
         else:
             self.p_norm = 0.0
         return self
-    
+
     c1_p: Optional[float] = 0.0
     c2_p: float = Field(1.0, ge=0, description="Quadratic cost coefficient (> 0)")
     c1_q: Optional[float] = 0.0
@@ -93,6 +97,7 @@ class Load(BaseModel):
     """
     Represents a non-controllable unit: either a load or a generator.
     """
+
     index: int
     bus: int
     p_norm: float
