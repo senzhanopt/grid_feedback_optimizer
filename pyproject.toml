@@ -28,7 +28,7 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "black>=25.9.0",
     "isort>=7.0.0",
