@@ -2,7 +2,8 @@ services:
   optimizer:
     image: senzhan2025/grid-feedback-optimizer:latest
     volumes:
-      - ./output:/app/output
+      - ./tests/output:/app/output
     command: examples/simple_example.json --save_path output/result.json
     # Optional: remove container after it finishes
     # restart: "no"  # Compose won't automatically restart
+    # run by: docker compose run --rm optimizer
