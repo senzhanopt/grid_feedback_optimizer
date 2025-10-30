@@ -1,7 +1,7 @@
 
 # ⚡ Grid Feedback Optimizer
 
-[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)]()
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue.svg)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 <!-- [![ReadTheDocs](https://img.shields.io/readthedocs/grid-feedback-optimizer)](https://grid-feedback-optimizer.readthedocs.io/en/latest/) -->
 
