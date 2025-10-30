@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath("../../src"))
 
 project = "grid_feedback_optimizer"
 author = "Sen Zhan"
-release = "0.1.9"
+release = "0.1.10"
 
 extensions = [
     "sphinx.ext.autodoc",
