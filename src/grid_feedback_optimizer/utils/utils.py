@@ -1,11 +1,15 @@
+import numpy as np
 import pandas as pd
 from power_grid_model import ComponentType
-import numpy as np
+
 from grid_feedback_optimizer.models.network import Network
 from grid_feedback_optimizer.models.solve_data import OptimizationModelData
 
+
 class TransformerActivePowerTrackingCallback:
-    def __init__(self, sensitivity: np.ndarray, alpha: float = 1.0, n_transformer: int = 1):
+    def __init__(
+        self, sensitivity: np.ndarray, alpha: float = 1.0, n_transformer: int = 1
+    ):
         """
         Make sure the sensitivity is calculated using "from_side".
         """
@@ -14,20 +18,27 @@ class TransformerActivePowerTrackingCallback:
         self.sensitivity = sensitivity
         self.alpha = alpha
 
-    def __call__(self, grad_p: np.ndarray, grad_q: np.ndarray,
-                 P_transformer_meas_from: np.ndarray, target_power: np.ndarray | None = None):
+    def __call__(
+        self,
+        grad_p: np.ndarray,
+        grad_q: np.ndarray,
+        P_transformer_meas_from: np.ndarray,
+        target_power: np.ndarray | None = None,
+    ):
         # update dual variable
         if target_power is None:
             self.dual = np.zeros(self.n_transformer)
         else:
-            self.dual += self.alpha * (P_transformer_meas_from - target_power) / 500.0 # a simple scaling
+            self.dual += (
+                self.alpha * (P_transformer_meas_from - target_power) / 500.0
+            )  # a simple scaling
             self.dual[self.dual < 0] = 0.0
-        
+
         grad_p += self.sensitivity["dP_transformer_dp"].T @ self.dual
         grad_q += self.sensitivity["dP_transformer_dq"].T @ self.dual
 
         return grad_p, grad_q
-        
+
 
 def network_to_model_data(network: Network) -> OptimizationModelData:
     """Convert a Network object into OptimizationModelData."""
@@ -46,8 +57,15 @@ def network_to_model_data(network: Network) -> OptimizationModelData:
         q_norm=np.array([g.q_norm for g in network.renew_gens]),
         u_pu_max=np.array([bus.u_pu_max for bus in network.buses]),
         u_pu_min=np.array([bus.u_pu_min for bus in network.buses]),
-        s_line=np.array([
-            np.sqrt(3)*line.i_n*network.buses[line.from_bus].u_rated for line in network.lines
-        ]),
-        s_transformer=np.array([t.sn for t in network.transformers]) if len(network.transformers) >= 1 else None
+        s_line=np.array(
+            [
+                np.sqrt(3) * line.i_n * network.buses[line.from_bus].u_rated
+                for line in network.lines
+            ]
+        ),
+        s_transformer=(
+            np.array([t.sn for t in network.transformers])
+            if len(network.transformers) >= 1
+            else None
+        ),
     )
