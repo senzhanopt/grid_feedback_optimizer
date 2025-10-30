@@ -28,6 +28,16 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "isort>=7.0.0",
+    "pylint>=4.0.2",
+    "pytest>=8.4.2",
+    "sphinx>=8.2.3",
+    "sphinx-rtd-theme>=3.0.2",
+]
+
 [project.optional-dependencies]
 dev = [
     "black>=25.9.0",

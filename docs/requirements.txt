@@ -1,1 +1,8 @@
 sphinx_rtd_theme
+cvxpy
+matplotlib
+numpy
+openpyxl
+pandas
+power-grid-model
+pydantic
