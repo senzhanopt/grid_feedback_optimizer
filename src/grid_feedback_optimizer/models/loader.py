@@ -1,7 +1,18 @@
 import json
 from pathlib import Path
+
 import pandas as pd
-from grid_feedback_optimizer.models.network import Network, Bus, Line, Transformer, Source, RenewGen, Load
+
+from grid_feedback_optimizer.models.network import (
+    Bus,
+    Line,
+    Load,
+    Network,
+    RenewGen,
+    Source,
+    Transformer,
+)
+
 
 def load_network(file_path: str | Path) -> Network:
     """
@@ -24,17 +35,18 @@ def load_network(file_path: str | Path) -> Network:
     network = Network(**raw_data)
     return network
 
+
 def load_network_from_excel(file_path: str | Path) -> Network:
     """
     Load a Network object from an Excel file where each sheet corresponds
     to a component type (e.g., 'buses', 'lines', etc.).
-    
+
     Missing sheets are treated as empty lists.
     """
     file_path = Path(file_path)
     if not file_path.exists():
         raise FileNotFoundError(f"Excel file not found: {file_path}")
-    
+
     # Read all sheets into a dict of DataFrames
     sheets = pd.read_excel(file_path, sheet_name=None)
 
@@ -43,7 +55,7 @@ def load_network_from_excel(file_path: str | Path) -> Network:
             return []
         df = sheets[name]
         return [model(**rec) for rec in df.to_dict(orient="records")]
-    
+
     network = Network(
         buses=load_sheet("buses", Bus),
         lines=load_sheet("lines", Line),

@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from grid_feedback_optimizer.models.loader import load_network
 
 # Path to your example JSON
