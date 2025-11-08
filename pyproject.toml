@@ -31,6 +31,7 @@ where = ["src"]
 [dependency-groups]
 dev = [
     "black>=25.9.0",
+    "ipykernel>=7.1.0",
     "isort>=7.0.0",
     "pylint>=4.0.2",
     "pytest>=8.4.2",
@@ -41,6 +42,7 @@ dev = [
 [project.optional-dependencies]
 dev = [
     "black>=25.9.0",
+    "ipykernel>=7.1.0",
     "isort>=7.0.0",
     "pylint>=4.0.2",
     "pytest>=8.4.2",

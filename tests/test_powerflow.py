@@ -17,7 +17,7 @@ def test_powerflow_from_example():
     power_flow_solver.run(gen_update=np.array([50000.0, 0.0]).reshape(1, 2))
     power_flow_solver.obtain_sensitivity()
 
-    assert power_flow_solver.is_congested == True
+    assert power_flow_solver.is_congested() == True
 
 
 def test_powerflow_from_example_with_transformer():
@@ -35,4 +35,4 @@ def test_powerflow_from_example_with_transformer():
     power_flow_solver.run(gen_update=np.array([50000.0, 0.0]).reshape(1, 2))
     power_flow_solver.obtain_sensitivity()
 
-    assert power_flow_solver.is_congested == True
+    assert power_flow_solver.is_congested() == True
