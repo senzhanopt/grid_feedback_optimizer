@@ -1,0 +1,88 @@
+name: CI - Build, Test, and Publish to PyPI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run tests
+        run: |
+          pytest -v tests/
+
+  publish:
+    # Only run if tests pass and the push is a tag (e.g., v1.0.0)
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*
+
+  docker:
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/v')   # only run on version tags
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/grid-feedback-optimizer:latest
+          docker build -t $IMAGE_NAME .
+
+      - name: Push Docker image
+        run: |
+          IMAGE_NAME=${{ secrets.DOCKERHUB_USERNAME }}/grid-feedback-optimizer:latest
+          docker push $IMAGE_NAME
