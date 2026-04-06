@@ -79,7 +79,7 @@ class RenewGen(BaseModel):
         if self.p_norm is not None:
             return self
 
-        if self.p_min >= 0:
+        if self.p_min is not None and self.p_min >= 0:
             self.p_norm = self.p_max
         elif self.p_max <= 0:
             self.p_norm = self.p_min
